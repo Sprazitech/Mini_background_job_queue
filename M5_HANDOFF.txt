@@ -1,0 +1,101 @@
+M5 HANDOFF
+==========
+
+Supabase project URL to use:
+https://apyvyinpeklkuultxwsj.supabase.co
+
+IMPORTANT:
+- Only share the project URL with M5.
+- Do NOT share database passwords, service role keys, or full connection strings in chat.
+- The service role key and database credentials must be stored in GitHub Secrets and local environment files only.
+
+GitHub Secrets to create
+------------------------
+Add these values to the GitHub repository Secrets:
+
+1. DATABASE_URL
+   Example format:
+   postgresql+asyncpg://postgres.[ref]:[PASSWORD]@aws-0-[region].pooler.supabase.com:6543/postgres
+
+2. SUPABASE_URL
+   Example format:
+   https://[ref].supabase.co
+
+3. SUPABASE_SERVICE_ROLE_KEY
+   Example format:
+   eyJ...
+
+Optional (depending on deployment config):
+4. API_KEY
+   Example format:
+   dev-key-change-me
+
+5. WORKER_ENABLED
+   Example format:
+   true
+
+6. WORKER_CONCURRENCY
+   Example format:
+   1
+
+7. MAX_RETRIES
+   Example format:
+   3
+
+8. RATE_LIMIT_PER_MINUTE
+   Example format:
+   30
+
+Exact .env.example lines to add
+--------------------------------
+Update `.env.example` with:
+
+# Supabase (single project — used by BOTH local dev and production)
+DATABASE_URL=postgresql+asyncpg://postgres.[ref]:[PASSWORD]@aws-0-[region].pooler.supabase.com:6543/postgres
+SUPABASE_URL=https://[ref].supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+
+# API security (use DIFFERENT values for local vs prod)
+API_KEY=dev-key-change-me
+
+# Worker config
+WORKER_ENABLED=true
+WORKER_CONCURRENCY=1
+MAX_RETRIES=3
+
+# Rate limiting
+RATE_LIMIT_PER_MINUTE=30
+
+Exact team chat message
+-----------------------
+DB/QA status:
+- Schema created and validated locally in PostgreSQL.
+- Local seed data inserted successfully.
+- Local DB/QA validation is complete.
+- The live Supabase project could not be validated from this environment because outbound database connectivity / network reachability is blocked from this machine.
+
+The schema and seed scripts are in place and ready for a live run once connectivity is available.
+
+M5: please add the live Supabase project URL to GitHub Secrets and update `.env.example` with the correct values.
+
+Project URL to use:
+https://apyvyinpeklkuultxwsj.supabase.co
+
+Do not share DB passwords or service role keys in chat.
+
+Exact handoff to M5
+-------------------
+M5 — please add the live Supabase project configuration to the repo:
+- SUPABASE_URL=https://apyvyinpeklkuultxwsj.supabase.co
+- add the required live values to GitHub Secrets
+- update `.env.example` with the correct Supabase template values
+
+Do not share DB credentials in chat. Only the project URL is shared here.
+
+Next live validation command (when network access is available):
+- python scripts/apply_schema.py
+- python scripts/seed.py --confirm
+
+Final note
+----------
+DB/QA has completed the database foundation work locally. The remaining remote Supabase execution depends on environment/network access and should be handled by the project setup/admin owner via GitHub Secrets and project env configuration.
