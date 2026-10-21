@@ -1,0 +1,14 @@
+chore: project foundation and CI pipeline
+
+Created DevOps foundation files:
+- .gitignore with standard Python/development exclusions
+- .env.example with Supabase configuration template
+- requirements.txt with pinned production dependencies
+- requirements-dev.txt with development/testing tools
+- scripts/dev.sh for local development setup
+- .github/workflows/ci.yml for CI pipeline (main branch only)
+- .github/pull_request_template.md with team checklist
+- SECURITY.md with security checklist skeleton
+- README.md with project skeleton and TODO markers
+
+Note: app/ and tests/ directories exist but are empty. The CI pipeline includes "|| true" guards for initial commits, to be removed once M4's schema PR is merged.
