@@ -1,0 +1,43 @@
+DB/QA Build Log
+===============
+
+Date: 2026-10-21
+Project: Mini Background Job Queue
+
+Scope completed
+----------------
+- Created the exact Supabase schema in `scripts/schema.sql`.
+- Created `scripts/apply_schema.py` to read `DATABASE_URL`, convert `postgresql+asyncpg://` to `postgresql://`, execute the schema, and print `Schema applied`.
+- Created `scripts/seed.py` to require `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`, enforce `--confirm`, insert 15 jobs, and print `Seeded 15 jobs`.
+- Created empty package initializer `tests/__init__.py`.
+- Recorded the QA/database work in this build log.
+- Validated the schema locally in PostgreSQL and seeded 15 jobs successfully.
+
+Current status
+--------------
+- Local PostgreSQL validation succeeded.
+- The `jobs` table and `worker_heartbeat` table were created successfully.
+- Local seed data was inserted successfully with the expected job mix and statuses.
+- Live Supabase validation from this machine is currently blocked by outbound database connectivity / network reachability restrictions.
+- The Supabase-specific script is correct for a reachable Supabase project, but live remote execution remains pending until network access is available.
+
+Notes
+-----
+- The required production Supabase project URL and credentials were available for configuration, but the current runtime environment cannot reach the Supabase host from this machine.
+- The intended follow-up after successful live Supabase execution is:
+  1. Paste the exact schema into the team chat.
+  2. Announce the Supabase project URL to M5 only.
+  3. Ask M5 to add it to GitHub Secrets and `.env.example`.
+
+Execution checklist
+-------------------
+- export DATABASE_URL="postgresql+asyncpg://..."
+- python scripts/apply_schema.py
+- export SUPABASE_URL="https://...supabase.co"
+- export SUPABASE_SERVICE_ROLE_KEY="..."
+- python scripts/seed.py --confirm
+
+Status summary
+--------------
+Completed locally: schema created, local seed validated, and local database state confirmed.
+Live Supabase validation remains pending due to environment/network reachability constraints.
