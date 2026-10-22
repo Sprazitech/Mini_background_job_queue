@@ -349,3 +349,14 @@ Production/external verification status:
 
 M4 status: Repository implementation complete; production DLQ application and
 Supabase operational confirmation remain externally owned actions.
+
+
+M4 PRODUCTION EXECUTION NOTE — OCTOBER 22, 2026
+------------------------------------------------
+Render Free does not provide Web Shell access, so the production DLQ script
+cannot be run there. This does not require a Render plan upgrade. M4/M5 should
+apply `scripts/dead_letter_queue.sql` in the Supabase SQL Editor as one script,
+then run `scripts/verify_dead_letter_schema.sql` as a second script. The
+verification script checks tables, required job columns, indexes, functions,
+views, the archive trigger, and RLS. Production M4 status remains pending until
+that Supabase execution produces a successful verification result.
