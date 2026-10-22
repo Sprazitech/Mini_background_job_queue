@@ -66,6 +66,32 @@ async def test_create_and_list_jobs(client: httpx.AsyncClient):
     assert listed.json()["total"] == 1
     assert listed.json()["jobs"][0]["id"] == created.json()["id"]
 
+    fetched = await client.get(f"/jobs/{created.json()['id']}", headers=headers())
+    assert fetched.status_code == 200
+    assert fetched.json() == created.json()
+
+
+@pytest.mark.asyncio
+async def test_list_jobs_filters_and_paginates(client: httpx.AsyncClient):
+    for _ in range(3):
+        response = await client.post(
+            "/jobs", headers=headers(), json={"type": "generate_report"}
+        )
+        assert response.status_code == 201
+
+    filtered = await client.get("/jobs?status=queued", headers=headers())
+    paginated = await client.get("/jobs?limit=1&offset=1", headers=headers())
+    no_results = await client.get("/jobs?status=success", headers=headers())
+
+    assert filtered.status_code == 200
+    assert filtered.json()["total"] == 3
+    assert len(filtered.json()["jobs"]) == 3
+    assert paginated.status_code == 200
+    assert paginated.json()["total"] == 3
+    assert len(paginated.json()["jobs"]) == 1
+    assert no_results.status_code == 200
+    assert no_results.json() == {"jobs": [], "total": 0}
+
 
 @pytest.mark.asyncio
 async def test_create_job_requires_api_key(client: httpx.AsyncClient):
