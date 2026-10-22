@@ -8,15 +8,18 @@ from slowapi.middleware import SlowAPIMiddleware
 from slowapi import _rate_limit_exceeded_handler
 
 from app.config import settings
+from app.health import router as health_router
 from app.limiter import limiter
 from app.routes.jobs import router as jobs_router
+from app.worker.loop import start_worker, stop_worker
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    if settings.WORKER_ENABLED:
-        pass  # wired in PR #4
+    task = await start_worker() if settings.WORKER_ENABLED else None
     yield
+    if task:
+        await stop_worker(task)
 
 
 app = FastAPI(lifespan=lifespan)
@@ -31,3 +34,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(jobs_router)
+app.include_router(health_router)

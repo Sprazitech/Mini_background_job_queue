@@ -33,11 +33,16 @@ Alembic migrations to a new database or adopting the existing Supabase schema.
 - [ ] Add API authentication and rate limiting
 - [ ] Write API documentation with OpenAPI/Swagger
 
-## TODO: M3 - Worker Implementation  
-- [ ] Design job processing architecture
-- [ ] Implement retry logic with exponential backoff
-- [ ] Add failure handling and dead letter queue
-- [ ] Implement worker health monitoring
+## M3 - Worker Implementation
+- [x] Design job processing architecture
+- [x] Implement retry logic with exponential backoff
+- [x] Add failure handling for exhausted retries
+- [x] Implement worker health monitoring
+
+The worker claims queued jobs, retries failures with capped exponential
+backoff, and marks jobs failed after the configured maximum of 3 total
+attempts by default (`MAX_RETRIES`). Worker health is reported through the
+`/health` endpoint using the database connection and worker heartbeat.
 
 ## TODO: M4 - Database & Models
 - [x] Design Supabase database schema
