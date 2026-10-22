@@ -184,3 +184,35 @@ The Vercel and Render services must deploy the branch containing the frontend/de
 - `docs/index.html`
 - `docs/app.js`
 - `docs/styles.css`
+
+
+## Database URL and frontend environment variables
+
+### Render backend
+
+Set `DATABASE_URL` to the Supabase session-pooler connection string. The preferred format is:
+
+```text
+postgresql+asyncpg://USER:PASSWORD@HOST:PORT/DATABASE
+```
+
+The backend now normalizes `postgresql://` and `postgres://` values to the asyncpg dialect as a safety measure. Do not add `psycopg2` just to work around a synchronous URL; this application uses SQLAlchemy's async engine and `asyncpg`.
+
+Render must also contain these backend variables:
+
+```text
+DATABASE_URL
+SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY
+API_KEY
+WORKER_ENABLED=true
+WORKER_CONCURRENCY=1
+MAX_RETRIES=3
+RATE_LIMIT_PER_MINUTE=30
+```
+
+### Vercel frontend
+
+The current frontend is static HTML/CSS/JavaScript and does not require backend secrets in Vercel. Do **not** add `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, or the private backend `API_KEY` to Vercel.
+
+The API origin is currently configured in `docs/index.html` through the `api-base` meta tag. Update that value only if the Render service URL changes. The browser asks the user for an API key and keeps it in session storage; this is suitable only for controlled MVP testing, not secure public authentication.
