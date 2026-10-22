@@ -35,3 +35,6 @@ app.add_middleware(
 )
 app.include_router(jobs_router)
 app.include_router(health_router)
+from app.routes.dead_letter import router as dead_letter_router
+
+app.include_router(dead_letter_router)

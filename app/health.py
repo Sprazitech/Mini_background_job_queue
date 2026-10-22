@@ -84,13 +84,18 @@ async def health(
     dependencies=[Depends(_count_health_request), Depends(verify_api_key)],
 )
 async def metrics(session: AsyncSession = Depends(get_session)) -> dict[str, Any]:
+    # Job statistics
     statuses = await session.execute(
         select(Job.status, func.count()).group_by(Job.status)
     )
     counts = {status: count for status, count in statuses}
+    
+    # Worker heartbeat
     last_seen = await session.scalar(
         select(WorkerHeartbeat.last_seen).where(WorkerHeartbeat.id == 1)
     )
+    
+    # Average duration
     average_duration = await session.scalar(
         select(
             func.avg(
@@ -98,14 +103,76 @@ async def metrics(session: AsyncSession = Depends(get_session)) -> dict[str, Any
             )
         ).where(Job.status == "success")
     )
+    
+    # Dead letter queue statistics (if table exists)
+    dead_letter_stats = {}
+    try:
+        # Check if dead_letter_queue table exists
+        table_exists = await session.scalar(
+            text("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'dead_letter_queue'
+                )
+            """)
+        )
+        
+        if table_exists:
+            # Get dead letter queue counts
+            dlq_counts = await session.execute(
+                text("""
+                    SELECT 
+                        COUNT(*) as total,
+                        COUNT(*) FILTER (WHERE resolution_status = 'pending') as pending,
+                        COUNT(*) FILTER (WHERE resolution_status = 'resolved') as resolved,
+                        COUNT(*) FILTER (WHERE resolution_status = 'investigating') as investigating
+                    FROM dead_letter_queue
+                """)
+            )
+            dlq_row = dlq_counts.mappings().first()
+            
+            # Get failure categories
+            failure_categories = await session.execute(
+                text("""
+                    SELECT 
+                        COALESCE(failure_category, 'unknown') as category,
+                        COUNT(*) as count
+                    FROM dead_letter_queue
+                    GROUP BY failure_category
+                    ORDER BY count DESC
+                """)
+            )
+            
+            dead_letter_stats = {
+                "total": dlq_row["total"] if dlq_row else 0,
+                "pending": dlq_row["pending"] if dlq_row else 0,
+                "resolved": dlq_row["resolved"] if dlq_row else 0,
+                "investigating": dlq_row["investigating"] if dlq_row else 0,
+                "failure_categories": {
+                    row["category"]: row["count"] 
+                    for row in failure_categories.mappings()
+                },
+            }
+    except Exception as e:
+        logger.warning(f"Could not fetch dead letter queue stats: {e}")
+        dead_letter_stats = {"error": "Stats unavailable"}
+    
+    # Calculate success rate
     successful = counts.get("success", 0)
     failed = counts.get("failed", 0)
     completed = successful + failed
+    
+    # Get circuit breaker status
+    from app.worker.loop import get_circuit_breaker_status
+    circuit_breakers = get_circuit_breaker_status()
+    
     return {
         "counts_by_status": counts,
         "worker_last_seen": last_seen.isoformat() if last_seen else None,
         "avg_duration_seconds": float(average_duration or 0),
         "success_rate": successful / completed if completed else 0,
+        "dead_letter_queue": dead_letter_stats,
+        "circuit_breakers": circuit_breakers,
         "requests_total": requests_total,
         "jobs_submitted_total": jobs_submitted_total,
         "jobs_failed_total": jobs_failed_total,
