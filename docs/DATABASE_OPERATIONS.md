@@ -103,3 +103,23 @@ but must not include credentials.
   the worker heartbeat update logs.
 - **RLS access denied:** Review the active role and `pg_policies`; do not solve
   this by exposing service credentials to the frontend.
+
+
+## Supabase SQL Editor fallback for Render Free plan
+
+Render Free services do not provide Web Shell access. Do not upgrade the
+service solely to run the database migration. M4/M5 can apply and verify the
+schema through the Supabase Dashboard instead:
+
+1. Open the Supabase project SQL Editor.
+2. Open `scripts/dead_letter_queue.sql` from this repository.
+3. Paste the complete file into one SQL Editor query and run it as one script.
+   Do not split the PL/pgSQL functions at semicolons.
+4. Open `scripts/verify_dead_letter_schema.sql` and run it as a second query.
+5. Confirm the query reports `Dead-letter queue schema verification passed`.
+6. Review the returned RLS and policy rows and record the backup/recovery
+   confirmation in the secure operations record.
+
+The SQL Editor uses the project administrator context. Never paste the
+connection string, database password, service-role key, or API key into the
+SQL script.
