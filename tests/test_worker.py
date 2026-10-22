@@ -31,7 +31,7 @@ class TestWorkerHandlers:
         await handle_send_email(payload)
         
         duration = (datetime.now(timezone.utc) - start_time).total_seconds()
-        assert 1.9 <= duration <= 2.1, f"Handler should take ~2 seconds, took {duration}"
+        assert 1.8 <= duration <= 2.5, f"Handler should take ~2 seconds, took {duration}"
     
     @pytest.mark.asyncio
     async def test_handle_send_email_failure(self):
@@ -73,16 +73,16 @@ class TestRetryLogic:
     
     def test_calculate_next_attempt_exponential(self):
         """Test exponential backoff calculation."""
-        # Test first attempt (2^0 = 1, but min is 2)
+        # Test first attempt (2^0 = 1 second).
         next_attempt = calculate_next_attempt(0)
         assert isinstance(next_attempt, datetime)
         
         # Verify it's in the future
         assert next_attempt > datetime.now(timezone.utc)
         
-        # Check timing (should be ~1-2 seconds in future)
+        # Check timing with tolerance for time elapsed during the assertion.
         time_diff = (next_attempt - datetime.now(timezone.utc)).total_seconds()
-        assert 1 <= time_diff <= 2
+        assert 0.9 <= time_diff <= 1.1
     
     def test_calculate_next_attempt_attempt_sequence(self):
         """Test sequence of attempts produces increasing delays."""

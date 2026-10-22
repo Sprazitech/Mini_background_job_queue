@@ -460,3 +460,18 @@ Local validation:
 
 The skipped DLQ test requires a configured integration database and remains an
 external database-test requirement rather than a lint or import failure.
+
+
+CI RETRY TEST VALIDATION UPDATE — OCTOBER 22, 2026
+----------------------------------------------------
+The GitHub retry-test failure was caused by timing assertions requiring exact
+scheduler timing. The tests now preserve the one-second retry contract while
+allowing normal microsecond and CI scheduling variance. The simulated handler
+timing tolerance was also widened to avoid false failures on shared runners.
+
+Validation completed:
+✓ Ruff checks passed for `app/` and `tests/`.
+✓ Worker tests passed: 15 passed, 1 production-database DLQ test skipped.
+✓ pytest-asyncio fixture loop-scope warning removed through `pytest.ini`.
+✓ Python compilation passed.
+✓ `git diff --check` passed.
