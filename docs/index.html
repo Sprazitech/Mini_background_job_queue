@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="api-base" content="https://job-queue-api.onrender.com">
+    <meta name="color-scheme" content="light dark">
+    <title>Queueboard · Background jobs</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="#top" aria-label="Queueboard home">
+          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span>queue<span class="brand-accent">board</span></span>
+        </a>
+        <div class="topbar-right">
+          <span class="environment-label"><span class="environment-dot"></span>API dashboard</span>
+          <button class="button button-quiet button-small" id="api-key-button" type="button">Set API key</button>
+        </div>
+      </header>
+
+      <main id="top">
+        <section class="intro" aria-labelledby="page-title">
+          <div>
+            <p class="eyebrow">BACKGROUND JOBS</p>
+            <h1 id="page-title">A clear view of the queue.</h1>
+            <p class="intro-copy">Submit work, follow each attempt, and check worker health from one place.</p>
+          </div>
+          <div class="live-indicator" id="api-health" aria-live="polite">
+            <span class="health-dot" aria-hidden="true"></span>
+            <span id="api-health-label">Connecting to API</span>
+          </div>
+        </section>
+
+        <div class="error-banner" id="error-banner" role="alert" hidden></div>
+
+        <section class="dashboard-grid" aria-label="Queue dashboard">
+          <section class="panel submit-panel" aria-labelledby="submit-title">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">NEW WORK</p>
+                <h2 id="submit-title">Submit a job</h2>
+              </div>
+              <span class="step-mark" aria-hidden="true">01</span>
+            </div>
+
+            <form id="job-form">
+              <label class="field-label" for="job-type">Job type</label>
+              <select id="job-type" name="type" required>
+                <option value="send_email">Send email</option>
+                <option value="generate_report">Generate report</option>
+              </select>
+
+              <div class="field-heading">
+                <label class="field-label" for="job-payload">Payload</label>
+                <span class="field-hint">Valid JSON</span>
+              </div>
+              <textarea id="job-payload" name="payload" rows="7" spellcheck="false" required>{
+  "to": "alex@example.com",
+  "subject": "Your report is ready"
+}</textarea>
+              <p class="field-error" id="payload-error" aria-live="polite"></p>
+
+              <label class="check-row" for="force-fail">
+                <input id="force-fail" name="forceFail" type="checkbox">
+                <span class="custom-check" aria-hidden="true"></span>
+                <span>Force a failure <span class="check-subtitle">Useful for testing retries</span></span>
+              </label>
+
+              <button class="button button-primary submit-button" id="submit-button" type="submit">
+                <span>Queue job</span><span class="button-arrow" aria-hidden="true">↗</span>
+              </button>
+              <p class="form-footnote">The worker will pick it up automatically.</p>
+            </form>
+          </section>
+
+          <section class="panel metrics-panel" aria-labelledby="metrics-title">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">AT A GLANCE</p>
+                <h2 id="metrics-title">Queue health</h2>
+              </div>
+              <span class="refresh-note"><span class="pulse-dot"></span>Live</span>
+            </div>
+
+            <div class="metrics-grid" id="metrics-grid" aria-live="polite" aria-busy="true">
+              <article class="metric-card metric-featured">
+                <div class="metric-topline"><span class="metric-label">Queue depth</span><span class="metric-icon" aria-hidden="true">↗</span></div>
+                <p class="metric-value" id="metric-queue-depth">—</p>
+                <p class="metric-caption">Waiting to be processed</p>
+              </article>
+              <article class="metric-card">
+                <div class="metric-topline"><span class="metric-label">Success rate</span><span class="metric-icon" aria-hidden="true">◌</span></div>
+                <p class="metric-value" id="metric-success-rate">—</p>
+                <p class="metric-caption">Completed successfully</p>
+              </article>
+              <article class="metric-card">
+                <div class="metric-topline"><span class="metric-label">Worker age</span><span class="metric-icon" aria-hidden="true">◷</span></div>
+                <p class="metric-value" id="metric-worker-age">—</p>
+                <p class="metric-caption" id="metric-worker-caption">Since last heartbeat</p>
+              </article>
+              <article class="metric-card">
+                <div class="metric-topline"><span class="metric-label">Avg. duration</span><span class="metric-icon" aria-hidden="true">⌁</span></div>
+                <p class="metric-value" id="metric-avg-duration">—</p>
+                <p class="metric-caption">Per completed job</p>
+              </article>
+            </div>
+            <p class="metrics-updated" id="metrics-updated">Waiting for metrics</p>
+          </section>
+        </section>
+
+        <section class="panel jobs-panel" aria-labelledby="jobs-title">
+          <div class="jobs-heading">
+            <div class="panel-heading jobs-title-wrap">
+              <div>
+                <p class="eyebrow">WORK HISTORY</p>
+                <h2 id="jobs-title">Recent jobs <span class="jobs-count" id="jobs-count">—</span></h2>
+              </div>
+            </div>
+            <div class="table-controls">
+              <label class="visually-hidden" for="status-filter">Filter jobs by status</label>
+              <select id="status-filter" class="filter-select">
+                <option value="">All statuses</option>
+                <option value="queued">Queued</option>
+                <option value="running">Running</option>
+                <option value="success">Success</option>
+                <option value="failed">Failed</option>
+              </select>
+              <button class="button button-quiet refresh-button" id="refresh-button" type="button">
+                <span class="refresh-icon" aria-hidden="true">↻</span><span>Refresh</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="table-scroll" role="region" aria-label="Jobs table" tabindex="0">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Job ID</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Attempts</th>
+                  <th scope="col">Created</th>
+                  <th scope="col" class="actions-heading">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="jobs-body"></tbody>
+            </table>
+            <div class="empty-state" id="empty-state" hidden>
+              <span class="empty-icon" aria-hidden="true">⌁</span>
+              <p>No jobs yet. Submit one above.</p>
+            </div>
+            <div class="table-loading" id="jobs-loading" hidden>Loading jobs…</div>
+          </div>
+          <div class="table-footer"><span id="jobs-footer">Updates every 3 seconds</span><span class="footer-mark">QUEUEBOARD <span>·</span> 01</span></div>
+        </section>
+      </main>
+
+      <footer class="page-footer"><span>Built for the work behind the scenes.</span><span>Queueboard</span></footer>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  </body>
+</html>
