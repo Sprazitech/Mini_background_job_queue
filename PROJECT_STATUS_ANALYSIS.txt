@@ -13,6 +13,20 @@ in the correct sequence.
 CURRENT PROJECT STATUS
 ----------------------
 
+LIVE SUPABASE VALIDATION UPDATE — OCTOBER 22, 2026
+---------------------------------------------------
+Confirmed by the M4 owner:
+✓ `python scripts/apply_schema.py` completed with “Schema applied” using the
+  Supabase session pooler.
+✓ Supabase Table Editor shows `jobs` and `worker_heartbeat` in the public schema.
+✓ `worker_heartbeat` contains its initial row (id 1).
+✓ `jobs` is empty; seed data has not been added.
+
+M4 has completed live schema application and validation, added the SQLAlchemy
+models and initial Alembic migration, and recorded the existing schema at the
+Alembic baseline (`20261022_01`, confirmed as head). M2 is next to build the API.
+GitHub Secrets and the wider M5 security checklist have not been verified here.
+
 FILES EXISTING IN PROJECT:
 ├── .env.example                    # Supabase config template (with placeholders)
 ├── .gitignore                      # Standard Python/Dev exclusions
@@ -23,8 +37,13 @@ FILES EXISTING IN PROJECT:
 │   │   └── keepalive.yml           # Keepalive workflow
 │   └── pull_request_template.md    # Team checklist template
 ├── app/
+│   ├── __init__.py
+│   ├── models.py                  # SQLAlchemy models
 │   ├── routes/                     # EMPTY - M2's responsibility
 │   └── worker/                     # EMPTY - M3's responsibility
+├── migrations/                     # Alembic environment and initial revision
+├── alembic.ini
+├── docs/DATABASE_MIGRATIONS.md
 ├── database/
 │   └── QA                          # Database QA documentation
 ├── scripts/
@@ -54,59 +73,41 @@ Delivered:
 6. README skeleton with TODO markers
 7. Created branch: oluwatobi/devops
 
-M4 (PERSISTENCE/DATABASE) - PARTIALLY COMPLETED ✅
-=================================================
+M4 (PERSISTENCE/DATABASE) - COMPLETE ✅
+=======================================
 Delivered:
 1. Database schema design (scripts/schema.sql)
 2. Schema application script (scripts/apply_schema.py)
 3. Database seeding script (scripts/seed.py)
 4. Database QA documentation (database/QA)
 5. M5_HANDOFF.txt with critical information
+6. SQLAlchemy models (app/models.py)
+7. Async Alembic configuration and initial migration (alembic.ini, migrations/)
+8. Migration instructions (docs/DATABASE_MIGRATIONS.md)
 
-Status from M5_HANDOFF.txt:
-✓ Schema created and validated locally in PostgreSQL
-✓ Local seed data inserted successfully
-✓ Local DB/QA validation complete
-✗ BLOCKED: Live Supabase validation due to network connectivity
+Current validation:
+✓ Schema created and validated locally in PostgreSQL (per prior handoff)
+✓ Live Supabase schema applied successfully on October 22, 2026
+✓ `jobs` and `worker_heartbeat` confirmed in Supabase Table Editor
+✓ Initial heartbeat row confirmed; `jobs` is empty and production seed data was not added
+✓ Alembic baseline stamped; `alembic current` confirmed `20261022_01 (head)`
 
-M2 (API), M3 (WORKER), M5 (SECURITY) - NOT STARTED ❌
-====================================================
+M2 (API), M3 (WORKER) - NOT STARTED ❌
+=====================================
 Based on project structure:
 • app/routes/ - EMPTY (M2's responsibility)
 • app/worker/ - EMPTY (M3's responsibility)
 • tests/ - EMPTY (Shared responsibility)
-• SECURITY.md - All items unchecked (M5's responsibility)
+
+M5 (SECURITY) STATUS - NOT VERIFIED ⚠️
+=======================================
+• GitHub Secrets setup and SECURITY.md checklist completion need confirmation.
 
 NEXT STEPS IN ORDER OF SEQUENCE
 --------------------------------
 
-1. M5 (SECURITY/SETUP) - IMMEDIATE NEXT STEP ⚠️
-===============================================
-CRITICAL ACTIONS:
-1. Get Supabase credentials from project owner
-2. Add GitHub Secrets (Repository Settings → Secrets and variables → Actions):
-   • DATABASE_URL - Live Supabase connection string
-   • SUPABASE_URL - https://apyvyinpeklkuultxwsj.supabase.co
-   • SUPABASE_SERVICE_ROLE_KEY - Live service role key
-   • API_KEY - Production API key
-   • WORKER_ENABLED, WORKER_CONCURRENCY, MAX_RETRIES, RATE_LIMIT_PER_MINUTE
-3. Update .env.example with correct placeholder format
-4. Test live Supabase connection using provided scripts
-5. Run live validation: 
-   python scripts/apply_schema.py
-   python scripts/seed.py --confirm
-
-2. M4 (PERSISTENCE) - AFTER M5 SETUP
-====================================
-ACTIONS:
-1. Verify live Supabase schema application
-2. Validate seed data in production database
-3. Implement SQLAlchemy models in app/models.py
-4. Create database migration scripts (Alembic setup)
-5. Add data validation and constraints
-
-3. M2 (API) - AFTER DATABASE IS READY
-======================================
+1. M2 (API) - NEXT OWNER
+=========================
 ACTIONS:
 1. Define API endpoints and request/response schemas in app/routes/
 2. Implement job submission endpoint (POST /api/jobs)
@@ -115,7 +116,7 @@ ACTIONS:
 5. Implement rate limiting
 6. Write OpenAPI/Swagger documentation
 
-4. M3 (WORKER) - AFTER API IS FUNCTIONAL
+3. M3 (WORKER) - AFTER API IS FUNCTIONAL
 =========================================
 ACTIONS:
 1. Design job processing architecture in app/worker/
@@ -123,6 +124,11 @@ ACTIONS:
 3. Add failure handling and dead letter queue
 4. Implement worker health monitoring
 5. Create worker startup/shutdown procedures
+
+4. M5 (SECURITY/SETUP) - PARALLEL SECURITY WORK
+================================================
+Confirm GitHub Secrets and complete the security checklist. Their status has
+not been verified in this update.
 
 5. M1 (DEVOPS) - CONTINUOUS SUPPORT
 ====================================
@@ -135,14 +141,16 @@ ACTIONS:
 SECRETS AND VARIABLES NEEDED
 ----------------------------
 
-GITHUB SECRETS (To be added by M5):
+GITHUB SECRETS (STATUS UNVERIFIED):
 ===================================
 1. DATABASE_URL
-   Format: postgresql+asyncpg://postgres.[ref]:[PASSWORD]@aws-0-[region].pooler.supabase.com:6543/postgres
+   Use the exact session-pooler connection string from Supabase Connect, port 5432.
 2. SUPABASE_URL
-   Format: https://apyvyinpeklkuultxwsj.supabase.co
-3. SUPABASE_SERVICE_ROLE_KEY
-   Format: eyJ... (JWT token)
+   Project URL (not a password or database connection string).
+3. Supabase backend API key
+   Store a new secret key server-side. The current seed script still expects the
+   legacy `SUPABASE_SERVICE_ROLE_KEY` environment variable; update that integration
+   before switching the script to a new-format key.
 4. API_KEY
    Production API key (MUST be different from dev)
 5. WORKER_ENABLED
@@ -171,9 +179,8 @@ WHO DOES WHAT - RESPONSIBILITY MATRIX
 --------------------------------------
 
 M5 (SECURITY/SETUP OWNER):
-• Get production Supabase credentials from project admin
-• Add ALL secrets to GitHub repository
-• Test live database connection
+• Confirm GitHub Secrets are set without disclosing their values
+• Confirm the security checklist and key rotation status
 • Update security documentation
 
 M1 (DEVOPS OWNER):
@@ -183,13 +190,12 @@ M1 (DEVOPS OWNER):
 • Ensure security best practices
 
 M4 (DATABASE OWNER):
-• Wait for M5 to provide live database access
-• Apply schema to production
-• Implement data models and migrations
-• Set up database monitoring
+• Live schema applied and confirmed
+• SQLAlchemy models and initial Alembic migration implemented
+• Existing Supabase schema stamped at the initial Alembic revision
 
 M2 (API OWNER):
-• Wait for database to be ready (M4)
+• Database models, live schema, and Alembic baseline are ready
 • Build FastAPI endpoints
 • Implement authentication and validation
 • Create API documentation
@@ -202,16 +208,14 @@ M3 (WORKER OWNER):
 
 CRITICAL PATH DEPENDENCIES
 --------------------------
-1. M5 → M4: Database cannot be validated in production without secrets
-2. M4 → M2: API cannot be built without database models
-3. M2 → M3: Worker needs API endpoints to fetch jobs
-4. M1: Continuous support needed throughout
+1. M4 → M2: Database models and migration baseline complete; API is unblocked
+2. M2 → M3: Worker needs a functional API
+3. M1: Continuous support needed throughout
 
 IMMEDIATE BLOCKERS
 ------------------
-1. NETWORK ACCESS to live Supabase (mentioned in M5_HANDOFF)
-2. PRODUCTION CREDENTIALS not yet in GitHub Secrets
-3. EMPTY CODE DIRECTORIES for M2 and M3 work
+1. GitHub Secrets and M5 security checklist status are unverified
+2. M2 API and M3 worker implementation have not started
 
 CRITICAL INFORMATION FROM M5_HANDOFF.TXT
 ----------------------------------------
@@ -222,31 +226,28 @@ CRITICAL INFORMATION FROM M5_HANDOFF.TXT
 
 RECOMMENDED ACTION PLAN
 -----------------------
-1. IMMEDIATE: M5 contacts project admin for Supabase credentials
-2. URGENT: M5 adds all required secrets to GitHub
-3. PRIORITY: M5 tests live database connection
-4. FOLLOW-UP: M4 validates production database
-5. CONTINUE: M2 and M3 begin implementation once dependencies resolved
+1. M2 builds the API using the ready database models and migrations.
+2. M3 follows when the API is functional.
+3. M5 confirms GitHub Secrets and completes the security checklist in parallel.
 
 PROJECT READINESS ASSESSMENT
 ----------------------------
-Infrastructure: 70% complete (M1 done, M5 pending)
-Database: 60% complete (M4 done locally, production pending)
+Infrastructure: M1 foundation present; M5 setup status unverified
+Database: Supabase schema live; Alembic baseline recorded
 API: 0% complete (M2 not started)
 Worker: 0% complete (M3 not started)
 Security: 10% complete (Checklist created, implementation pending)
 
 RISK ASSESSMENT
 ---------------
-HIGH RISK: Production deployment blocked without GitHub Secrets
-MEDIUM RISK: Development dependencies not resolved
+HIGH RISK: Production deployment readiness cannot be confirmed until GitHub Secrets are verified
+MEDIUM RISK: API and worker implementation have not started
 LOW RISK: Foundation work completed successfully
 
 CONTACT POINTS
 --------------
-• M5 needs Supabase credentials from project admin
+• M5 should confirm GitHub Secrets and security checklist status
 • M1 available for DevOps support
-• M4 ready for database validation once credentials available
+• M4 database handoff to M2 is ready
 
-This analysis provides a clear roadmap for completing the Mini Background Job Queue project.
-The critical path starts with M5 obtaining and configuring the production Supabase credentials.
+This analysis provides the current implementation status and handoff sequence.
