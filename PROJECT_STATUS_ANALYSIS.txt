@@ -360,3 +360,25 @@ CONTACT POINTS
 • M3 worker implementation complete and ready for deployment
 
 This analysis provides the current implementation status and handoff sequence.
+
+
+M1 FRONTEND READINESS ADDENDUM — OCTOBER 22, 2026
+---------------------------------------------------
+The M1 frontend implementation is present in `docs/` as the static Queueboard dashboard (`index.html`, `app.js`, `styles.css`, and `README.md`). It supports job submission, job listing/status filtering, queue metrics, API health display, API-key entry, and polling. The frontend commit is `1c42cf0` (`frontend`).
+
+Verification results:
+• `docs/index.html` is configured with `https://job-queue-api.onrender.com` as the API origin.
+• `app/main.py` allows `https://job-queue-docs.vercel.app` and `http://localhost:8000` in CORS.
+• `https://job-queue-docs.vercel.app` returned HTTP 404; the expected Vercel deployment is not verified.
+• `https://job-queue-api.onrender.com/health` and `/docs` timed out; the production backend is not verified as reachable.
+• Live job submission and status retrieval could not be tested because the backend did not respond and no API key was used or exposed.
+
+M1 scope decision:
+• A dedicated dead-letter queue screen is not required for the initial frontend MVP. The backend DLQ management API remains available for a future/admin interface.
+• The current sessionStorage API-key approach is acceptable only for controlled MVP testing, not as secure public-browser authentication. M2 and M5 must approve a browser-safe authentication design before public launch.
+
+Current M1 blockers:
+1. M5 or an authorized Vercel administrator must complete or verify deployment of `docs/`.
+2. M5 must confirm the actual production API URL and Render service availability.
+3. M2/M5 must approve the frontend authentication approach.
+4. After those items, run authenticated frontend smoke tests for job submission and status retrieval.
