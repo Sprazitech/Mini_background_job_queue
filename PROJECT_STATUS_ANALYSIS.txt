@@ -441,3 +441,22 @@ Validation limitations:
 M2 status: Core API implementation, contract documentation, metrics compatibility,
 DLQ request validation, and CI test enforcement are complete. Dedicated test
 execution and public authentication remain release-gate items.
+
+
+CI LINT VALIDATION UPDATE — OCTOBER 22, 2026
+----------------------------------------------
+The GitHub Ruff failure was corrected:
+✓ Moved the dead-letter router import to the module import block.
+✓ Removed unused imports from the DLQ routes, schemas, and worker tests.
+✓ Corrected the undefined worker-test reference to use its explicit mock handler.
+✓ Enabled the existing async worker tests with pytest-asyncio markers.
+✓ Corrected the worker test session factory and SQLAlchemy result mocks.
+
+Local validation:
+✓ `ruff check app/ tests/` passed.
+✓ Worker tests passed: 15 passed, 1 production-database DLQ test skipped.
+✓ Python compilation passed.
+✓ `git diff --check` passed.
+
+The skipped DLQ test requires a configured integration database and remains an
+external database-test requirement rather than a lint or import failure.

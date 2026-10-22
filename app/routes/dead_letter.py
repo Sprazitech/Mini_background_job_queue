@@ -8,9 +8,8 @@ from typing import Any, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import text, func
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql import select
 
 from app.database import get_session
 from app.security import verify_api_key

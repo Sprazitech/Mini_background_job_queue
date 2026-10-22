@@ -10,6 +10,7 @@ from slowapi import _rate_limit_exceeded_handler
 from app.config import settings
 from app.health import router as health_router
 from app.limiter import limiter
+from app.routes.dead_letter import router as dead_letter_router
 from app.routes.jobs import router as jobs_router
 from app.worker.loop import start_worker, stop_worker
 
@@ -39,6 +40,4 @@ app.add_middleware(
 )
 app.include_router(jobs_router)
 app.include_router(health_router)
-from app.routes.dead_letter import router as dead_letter_router
-
 app.include_router(dead_letter_router)
