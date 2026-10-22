@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Literal, Optional
+from typing import Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -81,6 +81,15 @@ class DeadLetterStats(BaseModel):
     min_resolution_seconds: float
     max_resolution_seconds: float
     analysis_period_days: int
+
+
+class ReprocessRequest(BaseModel):
+    reason: str = Field(default="manual_reprocess", min_length=1, max_length=200)
+
+
+class ResolveRequest(BaseModel):
+    resolution_status: Literal["resolved", "ignored"] = "resolved"
+    resolution_notes: str = Field(min_length=1, max_length=2000)
 
 
 class ReprocessResponse(BaseModel):

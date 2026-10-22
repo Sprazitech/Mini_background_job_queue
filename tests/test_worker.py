@@ -3,10 +3,9 @@ Worker component tests for the Mini Background Job Queue.
 Tests the worker loop, handlers, retry logic, and circuit breakers.
 """
 
-import asyncio
 import pytest
-from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, patch, MagicMock
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.worker.handlers import handle_send_email, handle_generate_report, HANDLERS
 from app.worker.retry import calculate_next_attempt
@@ -19,10 +18,10 @@ from app.worker.loop import (
     CIRCUIT_BREAKER_RESET_TIMEOUT,
 )
 
-
 class TestWorkerHandlers:
     """Test worker job handlers."""
     
+    @pytest.mark.asyncio
     async def test_handle_send_email_success(self):
         """Test successful email handler execution."""
         payload = {"to": "test@example.com", "subject": "Test"}
@@ -32,8 +31,9 @@ class TestWorkerHandlers:
         await handle_send_email(payload)
         
         duration = (datetime.now(timezone.utc) - start_time).total_seconds()
-        assert 1.9 <= duration <= 2.1, f"Handler should take ~2 seconds, took {duration}"
+        assert 1.8 <= duration <= 2.5, f"Handler should take ~2 seconds, took {duration}"
     
+    @pytest.mark.asyncio
     async def test_handle_send_email_failure(self):
         """Test email handler failure simulation."""
         payload = {"to": "test@example.com", "subject": "Test", "force_fail": True}
@@ -41,6 +41,7 @@ class TestWorkerHandlers:
         with pytest.raises(ValueError, match="Simulated email failure"):
             await handle_send_email(payload)
     
+    @pytest.mark.asyncio
     async def test_handle_generate_report_success(self):
         """Test successful report generator execution."""
         payload = {"report_type": "daily", "format": "pdf"}
@@ -51,6 +52,7 @@ class TestWorkerHandlers:
         duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         assert 2.9 <= duration <= 3.1, f"Handler should take ~3 seconds, took {duration}"
     
+    @pytest.mark.asyncio
     async def test_handle_generate_report_failure(self):
         """Test report generator failure simulation."""
         payload = {"report_type": "daily", "format": "pdf", "force_error": True}
@@ -71,16 +73,16 @@ class TestRetryLogic:
     
     def test_calculate_next_attempt_exponential(self):
         """Test exponential backoff calculation."""
-        # Test first attempt (2^0 = 1, but min is 2)
+        # Test first attempt (2^0 = 1 second).
         next_attempt = calculate_next_attempt(0)
         assert isinstance(next_attempt, datetime)
         
         # Verify it's in the future
         assert next_attempt > datetime.now(timezone.utc)
         
-        # Check timing (should be ~1-2 seconds in future)
+        # Check timing with tolerance for time elapsed during the assertion.
         time_diff = (next_attempt - datetime.now(timezone.utc)).total_seconds()
-        assert 1 <= time_diff <= 2
+        assert 0.9 <= time_diff <= 1.1
     
     def test_calculate_next_attempt_attempt_sequence(self):
         """Test sequence of attempts produces increasing delays."""
@@ -154,17 +156,22 @@ class TestWorkerLoopIntegration:
     
     @pytest.fixture
     def mock_session_factory(self):
-        """Create a mock session factory."""
+        """Create a mock async session factory."""
         mock_session = AsyncMock()
-        mock_session_factory = AsyncMock(return_value=mock_session)
+        session_context = MagicMock()
+        session_context.__aenter__ = AsyncMock(return_value=mock_session)
+        session_context.__aexit__ = AsyncMock(return_value=None)
+        mock_session_factory = MagicMock(return_value=session_context)
+        mock_session_factory.session = mock_session
         return mock_session_factory
     
+    @pytest.mark.asyncio
     async def test_run_worker_cycle_no_jobs(self, mock_session_factory):
         """Test worker cycle when no jobs are available."""
-        mock_session = mock_session_factory.return_value
+        mock_session = mock_session_factory.session
         
         # Mock no jobs returned
-        mock_result = AsyncMock()
+        mock_result = MagicMock()
         mock_result.mappings.return_value.one_or_none.return_value = None
         mock_session.execute.return_value = mock_result
         
@@ -178,12 +185,13 @@ class TestWorkerLoopIntegration:
         assert mock_session.execute.call_count >= 1
         mock_session.commit.assert_called()
     
+    @pytest.mark.asyncio
     async def test_run_worker_cycle_with_job_success(self, mock_session_factory):
         """Test worker cycle with successful job execution."""
-        mock_session = mock_session_factory.return_value
+        mock_session = mock_session_factory.session
         
         # Mock a job
-        mock_result = AsyncMock()
+        mock_result = MagicMock()
         mock_job = {
             "id": "test-job-id",
             "type": "send_email",
@@ -195,24 +203,24 @@ class TestWorkerLoopIntegration:
         mock_session.execute.return_value = mock_result
         
         # Patch the handler to avoid actual sleep
-        with patch("app.worker.loop.HANDLERS", {"send_email": AsyncMock()}):
+        mock_handler = AsyncMock()
+        with patch("app.worker.loop.HANDLERS", {"send_email": mock_handler}):
             # Run worker cycle
             claimed = await run_worker_cycle(mock_session_factory)
-            
+
             # Should return True (job claimed)
             assert claimed is True
-            
+
             # Handler should have been called
-            app.worker.loop.HANDLERS["send_email"].assert_called_once_with(
-                {"to": "test@example.com"}
-            )
+            mock_handler.assert_called_once_with({"to": "test@example.com"})
     
+    @pytest.mark.asyncio
     async def test_run_worker_cycle_with_job_failure(self, mock_session_factory):
         """Test worker cycle with job failure."""
-        mock_session = mock_session_factory.return_value
+        mock_session = mock_session_factory.session
         
         # Mock a job
-        mock_result = AsyncMock()
+        mock_result = MagicMock()
         mock_job = {
             "id": "test-job-id",
             "type": "send_email",
@@ -240,6 +248,7 @@ class TestDeadLetterQueueIntegration:
     """Test dead letter queue integration (requires actual schema)."""
     
     @pytest.mark.skip(reason="Requires actual database with dead_letter_queue table")
+    @pytest.mark.asyncio
     async def test_dead_letter_queue_archival(self):
         """Test that failed jobs are archived to dead letter queue.
         

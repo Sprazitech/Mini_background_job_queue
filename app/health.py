@@ -168,6 +168,7 @@ async def metrics(session: AsyncSession = Depends(get_session)) -> dict[str, Any
     
     return {
         "counts_by_status": counts,
+        "queue_depth": counts.get("queued", 0),
         "worker_last_seen": last_seen.isoformat() if last_seen else None,
         "avg_duration_seconds": float(average_duration or 0),
         "success_rate": successful / completed if completed else 0,

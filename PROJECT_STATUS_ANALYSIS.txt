@@ -410,3 +410,68 @@ M1 remaining production decision:
 M1 status: Frontend implementation and API integration complete; metrics mapping
 is corrected. Final public-launch authentication and optional DLQ UI remain scope
 or security decisions.
+
+
+M2 API COMPLETION UPDATE — OCTOBER 22, 2026
+---------------------------------------------
+M2 API contract and repository-side completion work:
+✓ Added an explicit `queue_depth` field to the metrics response while retaining
+  `counts_by_status` for compatibility.
+✓ Confirmed the frontend can consume the metrics response.
+✓ Updated DLQ reprocess and resolve endpoints to accept the documented JSON
+  request bodies with validation.
+✓ Corrected DLQ statistics interval parameter binding.
+✓ Corrected DLQ list responses to include required created_at and updated_at
+  fields.
+✓ Added docs/API.md with the job, health, metrics, authentication, DLQ, and
+  error-response contract for M1 and M5.
+✓ Configured CI with an isolated PostgreSQL service through TEST_DATABASE_URL.
+✓ Removed CI `|| true` guards so lint, schema setup, and integration-test
+  failures are reported instead of silently ignored.
+
+Validation limitations:
+• The complete API integration suite was not run in this workspace because
+  pytest and TEST_DATABASE_URL are not locally available.
+• CI is configured to run the suite against its isolated PostgreSQL service;
+  production credentials must never be used as TEST_DATABASE_URL.
+• The current X-API-Key remains suitable only for controlled MVP testing. M2,
+  M1, and M5 still need an approved user/session authentication design before
+  public launch; no unsafe replacement was introduced without that decision.
+
+M2 status: Core API implementation, contract documentation, metrics compatibility,
+DLQ request validation, and CI test enforcement are complete. Dedicated test
+execution and public authentication remain release-gate items.
+
+
+CI LINT VALIDATION UPDATE — OCTOBER 22, 2026
+----------------------------------------------
+The GitHub Ruff failure was corrected:
+✓ Moved the dead-letter router import to the module import block.
+✓ Removed unused imports from the DLQ routes, schemas, and worker tests.
+✓ Corrected the undefined worker-test reference to use its explicit mock handler.
+✓ Enabled the existing async worker tests with pytest-asyncio markers.
+✓ Corrected the worker test session factory and SQLAlchemy result mocks.
+
+Local validation:
+✓ `ruff check app/ tests/` passed.
+✓ Worker tests passed: 15 passed, 1 production-database DLQ test skipped.
+✓ Python compilation passed.
+✓ `git diff --check` passed.
+
+The skipped DLQ test requires a configured integration database and remains an
+external database-test requirement rather than a lint or import failure.
+
+
+CI RETRY TEST VALIDATION UPDATE — OCTOBER 22, 2026
+----------------------------------------------------
+The GitHub retry-test failure was caused by timing assertions requiring exact
+scheduler timing. The tests now preserve the one-second retry contract while
+allowing normal microsecond and CI scheduling variance. The simulated handler
+timing tolerance was also widened to avoid false failures on shared runners.
+
+Validation completed:
+✓ Ruff checks passed for `app/` and `tests/`.
+✓ Worker tests passed: 15 passed, 1 production-database DLQ test skipped.
+✓ pytest-asyncio fixture loop-scope warning removed through `pytest.ini`.
+✓ Python compilation passed.
+✓ `git diff --check` passed.
