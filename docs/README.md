@@ -14,10 +14,25 @@ Open `index.html` and update the `content` value on this meta tag:
 Use the API origin only, without a trailing `/jobs` path. The dashboard sends
 requests to `/jobs`, `/health`, and `/metrics` under that base URL.
 
-## Deploy
+## Deploy to Vercel
 
-Vercel serves this `docs/` folder as-is. Set the project output directory to
-`docs`; no framework preset, install command, or build command is needed.
+This is a static frontend. Use these Vercel project settings:
+
+- **Root Directory:** `docs`
+- **Framework Preset:** `Other`
+- **Build Command:** blank
+- **Install Command:** blank
+- **Output Directory:** blank, because `docs` is already the Root Directory
+
+Do not set the Vercel Root Directory to `app` and do not configure the Python
+FastAPI application as a Vercel Function. The backend belongs on Render.
+
+If the Vercel project must keep the repository root as its Root Directory, the
+root `vercel.json` routes `/`, `styles.css`, and `app.js` to the static files in
+`docs/`. In that setup, redeploy the commit containing `vercel.json`.
+
+The frontend does not require backend secrets in Vercel. Its backend origin is
+configured in `index.html` through the `api-base` meta tag.
 
 ## API key handling
 
