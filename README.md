@@ -22,6 +22,11 @@ Deployment instructions are available in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md
 pytest tests/ -v --cov=app
 ```
 
+## Database migrations
+
+See [docs/DATABASE_MIGRATIONS.md](docs/DATABASE_MIGRATIONS.md) for applying
+Alembic migrations to a new database or adopting the existing Supabase schema.
+
 ## TODO: M2 - API Implementation
 - [ ] Define API endpoints and request/response schemas
 - [ ] Implement job submission and status retrieval
@@ -35,7 +40,8 @@ pytest tests/ -v --cov=app
 - [ ] Implement worker health monitoring
 
 ## TODO: M4 - Database & Models
-- [ ] Design Supabase database schema
-- [ ] Implement SQLAlchemy models
-- [ ] Create database migration scripts
-- [ ] Add data validation and constraints
+- [x] Design Supabase database schema
+- [x] Implement SQLAlchemy models
+- [x] Create database migration scripts
+- [x] Add database-level type and status constraints
+- [x] Apply and validate the schema in Supabase
