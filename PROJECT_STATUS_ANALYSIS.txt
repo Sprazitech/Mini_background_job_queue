@@ -360,3 +360,53 @@ then run `scripts/verify_dead_letter_schema.sql` as a second script. The
 verification script checks tables, required job columns, indexes, functions,
 views, the archive trigger, and RLS. Production M4 status remains pending until
 that Supabase execution produces a successful verification result.
+
+
+M4 PRODUCTION DLQ VERIFICATION COMPLETED — OCTOBER 22, 2026
+-------------------------------------------------------------
+M4/M5 executed the DLQ schema through the Supabase SQL Editor because Render
+Free does not provide Web Shell access.
+
+Confirmed from the Supabase SQL Editor results:
+✓ `dead_letter_queue` schema and hardening applied successfully.
+✓ DLQ verification completed without an error.
+✓ RLS is enabled on `dead_letter_queue`.
+✓ RLS is enabled on `jobs`.
+✓ RLS is enabled on `worker_heartbeat`.
+✓ The verification query returned the expected RLS status rows.
+
+The reported `rls_forced=false` value is not an application failure. It means
+table owners can bypass RLS; M4/M5 must still ensure the production application
+uses the approved least-privilege role and that browser roles do not have direct
+table access. Backup retention and restore testing must still be confirmed in
+the Supabase Dashboard operations record.
+
+M4 production DLQ status: COMPLETE for schema application and RLS verification.
+Remaining M4 operational confirmation: backup/recovery evidence and final
+least-privilege role review.
+
+
+M1 FRONTEND COMPLETION UPDATE — OCTOBER 22, 2026
+--------------------------------------------------
+M1 frontend audit and integration work completed:
+✓ Queueboard is deployed at https://mini-background-job-queue.vercel.app/.
+✓ The frontend API base is configured for https://mini-background-job-queue.onrender.com.
+✓ Job submission, job listing, status filtering, job details, polling, and health
+  display are implemented.
+✓ The frontend metrics parser now derives queue depth from the API's
+  `counts_by_status.queued` response when a direct queue-depth field is absent.
+✓ The existing production API and CORS configuration were previously verified;
+  Render health returned db=true and worker=true.
+✓ A dedicated DLQ screen is deferred from the initial MVP; the backend DLQ API
+  remains available for an operational/admin client.
+
+M1 remaining production decision:
+• The current frontend asks for a static API key and stores it in sessionStorage.
+  This is acceptable only for controlled MVP testing, not public production
+  authentication. M2 and M5 must select and implement an approved user/session
+  authentication design before public launch. No unsafe replacement was invented
+  without an agreed identity provider and authorization model.
+
+M1 status: Frontend implementation and API integration complete; metrics mapping
+is corrected. Final public-launch authentication and optional DLQ UI remain scope
+or security decisions.
