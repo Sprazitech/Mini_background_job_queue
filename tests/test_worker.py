@@ -7,6 +7,7 @@ import pytest
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from app.config import settings
 from app.worker.handlers import handle_send_email, handle_generate_report, HANDLERS
 from app.worker.retry import calculate_next_attempt
 from app.worker.loop import (
@@ -22,16 +23,14 @@ class TestWorkerHandlers:
     """Test worker job handlers."""
     
     @pytest.mark.asyncio
-    async def test_handle_send_email_success(self):
-        """Test successful email handler execution."""
-        payload = {"to": "test@example.com", "subject": "Test"}
-        start_time = datetime.now(timezone.utc)
-        
-        # Should complete without error
-        await handle_send_email(payload)
-        
-        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
-        assert 1.8 <= duration <= 2.5, f"Handler should take ~2 seconds, took {duration}"
+    async def test_handle_send_email_success(self, monkeypatch):
+        """Test successful email handler execution with a mocked SMTP send."""
+        payload = {"to": "test@example.com", "subject": "Test", "body": "Hello"}
+        monkeypatch.setattr(settings, "SMTP_HOST", "smtp.test")
+        monkeypatch.setattr(settings, "EMAIL_FROM", "worker@test.example")
+        with patch("app.worker.handlers._send_email_sync") as send_email:
+            await handle_send_email(payload)
+        send_email.assert_called_once_with(payload)
     
     @pytest.mark.asyncio
     async def test_handle_send_email_failure(self):

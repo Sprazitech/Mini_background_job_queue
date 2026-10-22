@@ -216,3 +216,29 @@ RATE_LIMIT_PER_MINUTE=30
 The current frontend is static HTML/CSS/JavaScript and does not require backend secrets in Vercel. Do **not** add `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, or the private backend `API_KEY` to Vercel.
 
 The API origin is currently configured in `docs/index.html` through the `api-base` meta tag. Update that value only if the Render service URL changes. The browser asks the user for an API key and keeps it in session storage; this is suitable only for controlled MVP testing, not secure public authentication.
+
+
+## SMTP email provider configuration
+
+The `send_email` worker now sends through an SMTP-compatible provider. Configure
+these variables in Render only; do not put SMTP credentials in Vercel or commit
+them to Git:
+
+```text
+SMTP_HOST=smtp.provider.example
+SMTP_PORT=587
+SMTP_USERNAME=provider-username
+SMTP_PASSWORD=provider-password
+EMAIL_FROM=verified-sender@example.com
+SMTP_USE_TLS=true
+SMTP_USE_SSL=false
+```
+
+Use either STARTTLS (`SMTP_USE_TLS=true`, normally port 587) or implicit TLS
+(`SMTP_USE_SSL=true`, normally port 465), not both. The provider must authorize
+`EMAIL_FROM`. A missing SMTP configuration causes send_email jobs to fail clearly
+and enter the normal retry/DLQ path instead of reporting simulated success.
+
+After adding the variables to Render, redeploy the service and test with a
+recipient address you control. Never place these credentials in Vercel, the
+frontend, `.env.example`, logs, or chat.
