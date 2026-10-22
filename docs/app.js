@@ -212,7 +212,8 @@ function workerAgeSeconds(metrics) {
 
 function renderMetrics(metrics) {
   const data = metrics?.metrics && typeof metrics.metrics === "object" ? metrics.metrics : metrics;
-  const queueDepth = firstDefined(data, ["queue_depth", "queued", "queued_jobs"]);
+  const queueDepth = firstDefined(data, ["queue_depth", "queued", "queued_jobs"])
+    ?? firstDefined(data?.counts_by_status, ["queued"]);
   const successRate = firstDefined(data, ["success_rate", "success_rate_percent", "success_percentage"]);
   const avgDuration = firstDefined(data, ["avg_duration_seconds", "average_duration_seconds", "avg_duration", "average_duration"]);
   const age = workerAgeSeconds(data);
