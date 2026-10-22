@@ -83,6 +83,15 @@ class DeadLetterStats(BaseModel):
     analysis_period_days: int
 
 
+class ReprocessRequest(BaseModel):
+    reason: str = Field(default="manual_reprocess", min_length=1, max_length=200)
+
+
+class ResolveRequest(BaseModel):
+    resolution_status: Literal["resolved", "ignored"] = "resolved"
+    resolution_notes: str = Field(min_length=1, max_length=2000)
+
+
 class ReprocessResponse(BaseModel):
     success: bool
     message: str

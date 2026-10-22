@@ -14,7 +14,13 @@ from sqlalchemy.sql import select
 
 from app.database import get_session
 from app.security import verify_api_key
-from app.schemas import DeadLetterEntry, DeadLetterStats, ReprocessResponse
+from app.schemas import (
+    DeadLetterEntry,
+    DeadLetterStats,
+    ReprocessRequest,
+    ReprocessResponse,
+    ResolveRequest,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["dead-letter-queue"], dependencies=[Depends(verify_api_key)])
@@ -90,6 +96,8 @@ async def list_dead_letter_entries(
                 final_attempt_count=row["final_attempt_count"],
                 max_retries=row["max_retries"],
                 archived_at=row["archived_at"],
+                created_at=row["created_at"],
+                updated_at=row["updated_at"],
                 archived_reason=row["archived_reason"],
                 failure_category=row["failure_category"],
                 resolution_status=row["resolution_status"],
@@ -171,7 +179,7 @@ async def get_dead_letter_entry(
 @router.post("/dead-letter/{entry_id}/reprocess", response_model=ReprocessResponse)
 async def reprocess_dead_letter_entry(
     entry_id: UUID,
-    reason: Optional[str] = "manual_reprocess",
+    request: ReprocessRequest,
     session: AsyncSession = Depends(get_session),
 ) -> ReprocessResponse:
     """
@@ -187,7 +195,7 @@ async def reprocess_dead_letter_entry(
         # Call the database function to reprocess
         result = await session.execute(
             text("SELECT reprocess_dead_letter_entry(:entry_id, :reason) as new_job_id"),
-            {"entry_id": str(entry_id), "reason": reason},
+            {"entry_id": str(entry_id), "reason": request.reason},
         )
         
         new_job_id = result.scalar()
@@ -202,7 +210,7 @@ async def reprocess_dead_letter_entry(
             extra={
                 "dead_letter_id": str(entry_id),
                 "new_job_id": str(new_job_id),
-                "reason": reason,
+                "reason": request.reason,
             },
         )
         
@@ -224,8 +232,7 @@ async def reprocess_dead_letter_entry(
 @router.put("/dead-letter/{entry_id}/resolve")
 async def resolve_dead_letter_entry(
     entry_id: UUID,
-    resolution_notes: str,
-    resolution_status: str = "resolved",
+    request: ResolveRequest,
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, Any]:
     """
@@ -233,7 +240,7 @@ async def resolve_dead_letter_entry(
     
     Use this when the failure has been investigated and no reprocessing is needed.
     """
-    if resolution_status not in ["resolved", "ignored"]:
+    if request.resolution_status not in ["resolved", "ignored"]:
         raise HTTPException(
             status_code=400, 
             detail="resolution_status must be 'resolved' or 'ignored'"
@@ -253,8 +260,8 @@ async def resolve_dead_letter_entry(
             """),
             {
                 "entry_id": str(entry_id),
-                "resolution_status": resolution_status,
-                "resolution_notes": resolution_notes,
+                "resolution_status": request.resolution_status,
+                "resolution_notes": request.resolution_notes,
             },
         )
         
@@ -267,16 +274,16 @@ async def resolve_dead_letter_entry(
             "dead_letter_resolved",
             extra={
                 "dead_letter_id": str(entry_id),
-                "resolution_status": resolution_status,
-                "resolution_notes": resolution_notes,
+                "resolution_status": request.resolution_status,
+                "resolution_notes": request.resolution_notes,
             },
         )
         
         return {
             "success": True,
-            "message": f"Entry {entry_id} marked as {resolution_status}",
+            "message": f"Entry {entry_id} marked as {request.resolution_status}",
             "entry_id": entry_id,
-            "resolution_status": resolution_status,
+            "resolution_status": request.resolution_status,
         }
         
     except HTTPException:
@@ -303,7 +310,7 @@ async def get_dead_letter_stats(
             text("""
                 SELECT 
                     COUNT(*) as total,
-                    COUNT(*) FILTER (WHERE archived_at >= NOW() - INTERVAL ':days days') as recent,
+                    COUNT(*) FILTER (WHERE archived_at >= NOW() - (:days * INTERVAL '1 day')) as recent,
                     COUNT(*) FILTER (WHERE resolution_status = 'pending') as pending,
                     COUNT(*) FILTER (WHERE resolution_status = 'resolved') as resolved,
                     COUNT(*) FILTER (WHERE resolution_status = 'investigating') as investigating,
@@ -321,7 +328,7 @@ async def get_dead_letter_stats(
                     COALESCE(failure_category, 'unknown') as category,
                     COUNT(*) as count
                 FROM dead_letter_queue
-                WHERE archived_at >= NOW() - INTERVAL ':days days'
+                WHERE archived_at >= NOW() - (:days * INTERVAL '1 day')
                 GROUP BY failure_category
                 ORDER BY count DESC
             """),
@@ -339,7 +346,7 @@ async def get_dead_letter_stats(
                     job_type,
                     COUNT(*) as count
                 FROM dead_letter_queue
-                WHERE archived_at >= NOW() - INTERVAL ':days days'
+                WHERE archived_at >= NOW() - (:days * INTERVAL '1 day')
                 GROUP BY job_type
                 ORDER BY count DESC
             """),
@@ -361,7 +368,7 @@ async def get_dead_letter_stats(
                 FROM dead_letter_queue
                 WHERE resolution_status = 'resolved'
                     AND resolved_at IS NOT NULL
-                    AND archived_at >= NOW() - INTERVAL ':days days'
+                    AND archived_at >= NOW() - (:days * INTERVAL '1 day')
             """),
             {"days": days},
         )
