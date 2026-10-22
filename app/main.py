@@ -30,6 +30,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://job-queue-docs.vercel.app",
+        "https://mini-background-job-queue.vercel.app",
         "http://localhost:8000",
     ],
     allow_credentials=True,

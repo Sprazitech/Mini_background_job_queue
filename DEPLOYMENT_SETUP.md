@@ -161,3 +161,26 @@ WORKER_CONCURRENCY=1
 MAX_RETRIES=3
 RATE_LIMIT_PER_MINUTE=100
 ```
+
+
+## Render service settings
+
+For the Render web service, use the following commands:
+
+- **Build command:** `pip install -r requirements.txt`
+- **Start command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- **Runtime:** Python
+
+The command must be `uvicorn`, not `unicorn`. The project includes the `uvicorn[standard]` dependency; there is no `unicorn` executable.
+
+The repository contains `.python-version` with Python `3.12`. After the file is merged into the branch configured in Render, use **Clear build cache & deploy**. Alternatively, set the Render service environment variable `PYTHON_VERSION` to a fully qualified Python 3.12 release.
+
+## Deployment branch requirement
+
+The Vercel and Render services must deploy the branch containing the frontend/deployment fixes. The current fixes are on `oluwatobi/devops`; if the services deploy `main`, merge the branch through the normal pull-request process before redeploying. Confirm the deployed commit contains:
+
+- `.python-version`
+- `vercel.json`
+- `docs/index.html`
+- `docs/app.js`
+- `docs/styles.css`
