@@ -1,384 +1,351 @@
 PROJECT STATUS ANALYSIS & NEXT STEPS
 =====================================
-Mini Background Job Queue Project
-Analysis Date: October 22, 2026
-Current Branch: oluwatobi/devops
+Mini Background Job Queue
+Updated: October 22, 2026
+Current branch: oluwatobi/devops
+Synchronized commit: b9f3e00
 
-OVERVIEW
---------
-This document analyzes the current state of the Mini Background Job Queue project,
-identifies what each team member (M1-M5) has delivered, and outlines the next steps
-in the correct sequence.
+PURPOSE
+-------
+This document records the current deliverables for M1-M5, verified deployment
+results, remaining work, ownership, dependencies, and production-readiness risks.
 
-CURRENT PROJECT STATUS
-----------------------
+IMPORTANT OWNERSHIP CORRECTION
+------------------------------
+The current team ownership is:
 
-LIVE SUPABASE VALIDATION UPDATE — OCTOBER 22, 2026
----------------------------------------------------
-Confirmed by the M4 owner:
-✓ `python scripts/apply_schema.py` completed with “Schema applied” using the
-  Supabase session pooler.
-✓ Supabase Table Editor shows `jobs` and `worker_heartbeat` in the public schema.
-✓ `worker_heartbeat` contains its initial row (id 1).
-✓ `jobs` is empty; seed data has not been added.
+M1 = Frontend
+M2 = API/Backend
+M3 = Worker
+M4 = Database/Persistence
+M5 = DevOps/Deployment
 
-M4 has completed live schema application and validation, added the SQLAlchemy
-models and initial Alembic migration, and recorded the existing schema at the
-Alembic baseline (`20261022_01`, confirmed as head). M2 has completed the API
-foundation and job endpoints. GitHub Secrets and the wider M5 security checklist
-have not been verified here.
+Earlier versions of this document incorrectly described M1 as DevOps and M5 as
+Security. DevOps, deployment, GitHub Secrets, and production environment setup
+belong to M5. Security verification remains part of M5's DevOps responsibility.
 
-FILES EXISTING IN PROJECT:
-├── .env.example                    # Supabase config template (with placeholders)
-├── .gitignore                      # Standard Python/Dev exclusions
-├── .github/
-│   ├── workflows/
-│   │   ├── ci.yml                  # CI pipeline
-│   │   ├── deploy.yml              # Deployment workflow
-│   │   └── keepalive.yml           # Keepalive workflow
-│   └── pull_request_template.md    # Team checklist template
-├── app/
-│   ├── __init__.py
-│   ├── config.py                  # Application settings
-│   ├── database.py                # Async SQLAlchemy session dependency
-│   ├── limiter.py                 # Rate-limit configuration
-│   ├── main.py                    # FastAPI application and router registration
-│   ├── models.py                  # SQLAlchemy models
-│   ├── schemas.py                 # Job request and response schemas
-│   ├── security.py                # API-key verification dependency
-│   ├── routes/
-│   │   └── jobs.py                # Job enqueue, list, and retrieval endpoints
-│   └── worker/                     # EMPTY - M3's responsibility
-├── migrations/                     # Alembic environment and initial revision
-├── alembic.ini
-├── docs/DATABASE_MIGRATIONS.md
-├── database/
-│   └── QA                          # Database QA documentation
-├── scripts/
-│   ├── apply_schema.py             # Schema application script
-│   ├── dev.sh                      # Dev environment setup
-│   ├── schema.sql                  # Database schema design
-│   └── seed.py                     # Database seeding script
-├── tests/
-│   └── test_api.py                 # API integration tests; requires TEST_DATABASE_URL
-├── COMMIT_MESSAGE.txt              # DevOps foundation commit message
-├── M5_HANDOFF.txt                  # Critical handoff document
-├── README.md                       # Project skeleton with TODOs
-├── requirements.txt                # Pinned production dependencies
-├── requirements-dev.txt            # Dev/testing tools
-└── SECURITY.md                     # Security checklist (all unchecked)
+CURRENT VERIFIED PROJECT STATUS
+-------------------------------
 
-WHAT HAS BEEN DELIVERED BY EACH TEAM MEMBER
--------------------------------------------
+Frontend:
+✓ Queueboard static frontend is deployed on Vercel.
+✓ Vercel frontend URL: https://mini-background-job-queue.vercel.app/
+✓ Frontend files are in docs/: index.html, app.js, styles.css, and README.md.
+✓ The frontend is configured to use the Render API URL:
+  https://mini-background-job-queue.onrender.com
 
-M1 (DEVOPS) - COMPLETED ✅
-=========================
-Delivered:
-1. Project foundation files (.gitignore, requirements files)
-2. CI/CD pipeline configuration
-3. Development setup script (scripts/dev.sh)
-4. PR template with team checklist
-5. Security checklist skeleton
-6. README skeleton with TODO markers
-7. Created branch: oluwatobi/devops
+Backend:
+✓ Render service is deployed with Uvicorn.
+✓ Render API URL: https://mini-background-job-queue.onrender.com
+✓ GET /health returned HTTP 200 with db=true and worker=true.
+✓ GET /docs returned HTTP 200.
+✓ CORS allows the deployed Vercel frontend origin.
+✓ Render is using Python 3.12 and the asyncpg database driver configuration.
 
-M4 (PERSISTENCE/DATABASE) - COMPLETE ✅
-=======================================
-Delivered:
-1. Database schema design (scripts/schema.sql)
-2. Schema application script (scripts/apply_schema.py)
-3. Database seeding script (scripts/seed.py)
-4. Database QA documentation (database/QA)
-5. M5_HANDOFF.txt with critical information
-6. SQLAlchemy models (app/models.py)
-7. Async Alembic configuration and initial migration (alembic.ini, migrations/)
-8. Migration instructions (docs/DATABASE_MIGRATIONS.md)
+Repository:
+✓ Local oluwatobi/devops and origin/main were synchronized at b9f3e00.
+✓ The branch was fast-forwarded and pushed to GitHub.
+✓ The main deployment fixes are present: .python-version, vercel.json,
+  app/database.py, app/main.py, and the docs frontend.
 
-Current validation:
-✓ Schema created and validated locally in PostgreSQL (per prior handoff)
-✓ Live Supabase schema applied successfully on October 22, 2026
-✓ `jobs` and `worker_heartbeat` confirmed in Supabase Table Editor
-✓ Initial heartbeat row confirmed; `jobs` is empty and production seed data was not added
-✓ Alembic baseline stamped; `alembic current` confirmed `20261022_01 (head)`
+Database:
+✓ Main Supabase schema was applied and validated.
+✓ jobs and worker_heartbeat exist in Supabase.
+✓ worker_heartbeat contains the initial row.
+✓ The API and worker can reach the production database.
+• Dead-letter queue schema application and verification still require explicit
+  confirmation in the production Supabase project.
 
-M2 (API) - IMPLEMENTATION COMPLETE ✅
-=====================================
-Delivered:
-1. FastAPI application with CORS, lifespan scaffold, and SlowAPI integration
-2. Async SQLAlchemy engine and request-scoped database session dependency
-3. API-key authentication using `X-API-Key`
-4. `POST /jobs` to enqueue `send_email` and `generate_report` jobs
-5. `GET /jobs` with status filtering, pagination, and newest-first ordering
-6. `GET /jobs/{job_id}` with UUID validation and not-found handling
-7. Payload-size validation, configurable retry limits, and create-route rate limiting
-8. API integration test coverage for core success and failure cases
-9. Dead letter queue management API integration
+FUNCTIONAL LIMITATION
+---------------------
+The current send_email worker handler is simulated. It waits and returns success;
+it does not send a real email through SMTP, Resend, SendGrid, Mailgun, Amazon SES,
+or another provider. A successful send_email job currently confirms only that the
+simulated handler completed.
 
-Current validation:
-✓ Application starts successfully with Uvicorn
-✓ OpenAPI documentation loads at `/docs`
-✓ Authenticated `POST /jobs` returned `201 Created` against the configured database
-✓ Dead letter queue API endpoints functional
-• Automated API tests require a dedicated PostgreSQL `TEST_DATABASE_URL`; they are
-  intentionally skipped until that isolated database is configured
+FILES AND COMPONENTS
+--------------------
+Frontend:
+├── docs/index.html                 # Queueboard interface and API base URL
+├── docs/app.js                     # Job submission, polling, metrics, and UI logic
+├── docs/styles.css                 # Frontend styling
+└── docs/README.md                  # Static Vercel deployment instructions
 
-M3 (WORKER) - COMPLETE ✅
-=========================
-Delivered:
-1. Worker implementation (app/worker/):
-   - handlers.py: Job handlers for send_email and generate_report
-   - retry.py: Exponential backoff retry logic with 300-second cap
-   - loop.py: Worker loop with job claiming, execution, and failure handling
-   - Circuit breaker implementation with automatic reset
-   - Dead letter queue integration
+Backend/API:
+├── app/main.py                     # FastAPI app, CORS, lifespan, routers
+├── app/config.py                   # Environment configuration
+├── app/database.py                 # Async SQLAlchemy engine and URL normalization
+├── app/security.py                 # API-key verification
+├── app/schemas.py                  # API and DLQ schemas
+├── app/routes/jobs.py              # Job enqueue, listing, and retrieval
+├── app/routes/dead_letter.py       # DLQ management API
+└── app/health.py                   # Health and metrics endpoints
 
-2. Dead letter queue system:
-   - dead_letter_queue.sql: Complete schema with automatic archiving trigger
-   - apply_dead_letter_schema.py: Schema application and verification script
-   - docs/DEAD_LETTER_QUEUE.md: Comprehensive documentation and best practices
+Worker:
+├── app/worker/handlers.py          # send_email and generate_report handlers
+├── app/worker/retry.py             # Capped exponential backoff
+├── app/worker/loop.py              # Claiming, processing, retry, and heartbeat
+└── tests/test_worker.py            # Worker and circuit-breaker tests
 
-3. Worker testing suite:
-   - tests/test_worker.py: Comprehensive unit and integration tests
-   - tests/test_worker_retry.py: Database integration tests for retry logic
-   - Test coverage for handlers, retry logic, circuit breakers, and worker loop
+Database and deployment:
+├── scripts/schema.sql              # Main database schema
+├── scripts/dead_letter_queue.sql   # DLQ schema and database functions
+├── scripts/apply_schema.py         # Main schema application script
+├── scripts/apply_dead_letter_schema.py # DLQ schema application/verification
+├── migrations/                     # Alembic configuration and baseline
+├── .python-version                 # Render Python runtime pin
+├── vercel.json                     # Static frontend rewrites when using repo root
+├── .github/workflows/              # CI/CD workflow files
+├── DEPLOYMENT_SETUP.md             # Deployment and environment instructions
+└── SECURITY.md                     # Security checklist
 
-4. Dead letter queue management API:
-   - app/routes/dead_letter.py: Full CRUD API for dead letter queue management
-   - List, view, reprocess, resolve, and statistics endpoints
-   - Integrated authentication and error handling
-
-5. Enhanced monitoring:
-   - Worker statistics endpoint with circuit breaker status
-   - Dead letter queue metrics and analytics
-   - Integrated health monitoring
-
-Current validation:
-✓ Worker handlers implemented and tested
-✓ Retry logic with exponential backoff working correctly
-✓ Circuit breaker prevents cascading failures
-✓ Dead letter queue schema ready for deployment
-✓ API endpoints for dead letter queue management functional
-✓ Comprehensive test suite covering all components
-
-M3 (WORKER) - COMPLETE ✅
-==========================
-Delivered:
-1. Worker implementation (app/worker/):
-   - handlers.py: Job handlers for send_email and generate_report
-   - retry.py: Exponential backoff retry logic with 300-second cap
-   - loop.py: Worker loop with job claiming, execution, and failure handling
-   - Circuit breaker implementation with automatic reset
-   - Dead letter queue integration
-
-2. Dead letter queue system:
-   - dead_letter_queue.sql: Complete schema with automatic archiving trigger
-   - apply_dead_letter_schema.py: Schema application and verification script
-   - docs/DEAD_LETTER_QUEUE.md: Comprehensive documentation and best practices
-
-3. Worker testing suite:
-   - tests/test_worker.py: Comprehensive unit and integration tests
-   - tests/test_worker_retry.py: Database integration tests for retry logic
-   - Test coverage for handlers, retry logic, circuit breakers, and worker loop
-
-4. Dead letter queue management API:
-   - app/routes/dead_letter.py: Full CRUD API for dead letter queue management
-   - List, view, reprocess, resolve, and statistics endpoints
-   - Integrated authentication and error handling
-
-5. Enhanced monitoring:
-   - Worker statistics endpoint with circuit breaker status
-   - Dead letter queue metrics and analytics
-   - Integrated health monitoring
-
-Current validation:
-✓ Worker handlers implemented and tested
-✓ Retry logic with exponential backoff working correctly
-✓ Circuit breaker prevents cascading failures
-✓ Dead letter queue schema ready for deployment
-✓ API endpoints for dead letter queue management functional
-✓ Comprehensive test suite covering all components
-
-M5 (SECURITY) STATUS - NOT VERIFIED ⚠️
-=======================================
-• GitHub Secrets setup and SECURITY.md checklist completion need confirmation.
-
-NEXT STEPS IN ORDER OF SEQUENCE
---------------------------------
-
-1. M5 (SECURITY/SETUP) - NEXT OWNER
-===================================
-ACTIONS:
-1. Confirm GitHub Secrets setup for production deployment
-2. Complete security checklist in SECURITY.md
-3. Verify API key generation and rotation procedures
-4. Confirm environment variable security for all deployments
-5. Set up monitoring alerts for security events
-
-2. M1 (DEVOPS) - DEPLOYMENT PREPARATION
-========================================
-ACTIONS:
-1. Remove "|| true" guards from CI pipeline now that code exists
-2. Set up deployment to Render/Vercel with proper configuration
-3. Configure monitoring and alerting for production
-4. Set up backup procedures for database and logs
-5. Prepare deployment pipeline for M5 security verification
-
-3. FINAL INTEGRATION TESTING
-============================
-ACTIONS:
-1. Run comprehensive test suite with production-like environment
-2. Verify dead letter queue schema application on Supabase
-3. Test worker with real job processing
-4. Validate API endpoints with production authentication
-5. Perform end-to-end system testing
-
-SECRETS AND VARIABLES NEEDED
-----------------------------
-
-GITHUB SECRETS (STATUS UNVERIFIED):
-===================================
-1. DATABASE_URL
-   Use the exact session-pooler connection string from Supabase Connect, port 5432.
-2. SUPABASE_URL
-   Project URL (not a password or database connection string).
-3. Supabase backend API key
-   Store a new secret key server-side. The current seed script still expects the
-   legacy `SUPABASE_SERVICE_ROLE_KEY` environment variable; update that integration
-   before switching the script to a new-format key.
-4. API_KEY
-   Production API key (MUST be different from dev)
-5. WORKER_ENABLED
-   Values: true/false
-6. WORKER_CONCURRENCY
-   Values: 1 (number of concurrent workers)
-7. MAX_RETRIES
-   Values: 3 (retry attempts)
-8. RATE_LIMIT_PER_MINUTE
-   Values: 30 (requests per minute)
-
-LOCAL DEVELOPMENT (.env file - NOT committed):
-==============================================
-Same variables as above but with:
-• Test/dummy values for local development
-• Local PostgreSQL connection for testing
-• API_KEY=dev-key-change-me
-
-DEPLOYMENT CONFIGURATION (To be configured by M1 later):
-========================================================
-• Same environment variables as GitHub Secrets
-• Deployment-specific configuration
-• Domain and SSL settings
-
-WHO DOES WHAT - RESPONSIBILITY MATRIX
---------------------------------------
-
-M5 (SECURITY/SETUP OWNER):
-• Confirm GitHub Secrets are set without disclosing their values
-• Complete the security checklist and key rotation procedures
-• Update security documentation and procedures
-
-M1 (DEVOPS OWNER):
-• Configure final CI/CD pipeline for production
-• Set up deployment to Render/Vercel with monitoring
-• Ensure production environment security and backups
-• Prepare for M5 security verification
-
-M4 (DATABASE OWNER):
-• Live schema applied and confirmed on Supabase
-• SQLAlchemy models and Alembic migration framework in place
-• Database ready for production with dead letter queue support
-
-M2 (API OWNER):
-• Delivered complete FastAPI job API with authentication and rate limiting
-• Integrated dead letter queue management API
-• Ready for production deployment once test database is configured
-
-M3 (WORKER OWNER - COMPLETE):
-• Delivered complete worker implementation with job processing
-• Implemented retry logic with exponential backoff and circuit breakers
-• Built dead letter queue system with automatic archiving
-• Created comprehensive test suite for worker components
-• Enhanced monitoring with circuit breaker status and dead letter metrics
-
-CRITICAL PATH DEPENDENCIES
---------------------------
-1. M4 → M2: Database models and migration baseline complete; API is ready
-2. M2 → M3: Worker implementation complete and integrated with API
-3. M5 → M1: Security verification needed before production deployment
-4. M1 → All: DevOps support for final deployment preparation
-
-IMMEDIATE BLOCKERS
-------------------
-1. GitHub Secrets and M5 security checklist status are unverified
-2. A dedicated PostgreSQL `TEST_DATABASE_URL` is needed to run API integration tests
-3. Production deployment configuration pending M5 security verification
-
-RESOLVED BLOCKERS
+TEAM DELIVERABLES
 -----------------
-✓ M3 worker implementation complete with all components delivered
-✓ Dead letter queue system implemented and ready for deployment
-✓ Worker test suite created and comprehensive
 
-CRITICAL INFORMATION FROM M5_HANDOFF.TXT
-----------------------------------------
-• Supabase Project URL: https://apyvyinpeklkuultxwsj.supabase.co
-• IMPORTANT: Only share the project URL with M5
-• DO NOT share database passwords, service role keys, or full connection strings in chat
-• Service role key and database credentials MUST be stored in GitHub Secrets and local environment files only
+M1 — FRONTEND
+=============
+Status: Frontend implementation and initial deployment complete; final
+integration and production-authentication work remain.
 
-RECOMMENDED ACTION PLAN
------------------------
-1. M5 completes security verification and GitHub Secrets setup immediately.
-2. M1 prepares final deployment pipeline with production configuration.
-3. Apply dead letter queue schema to production database: `python scripts/apply_dead_letter_schema.py`
-4. Run comprehensive test suite with production-like environment.
-5. Deploy to production environment with monitoring enabled.
-6. Conduct final integration testing with real workloads.
+Completed:
+1. Built Queueboard as a static HTML/CSS/JavaScript dashboard.
+2. Added job submission for send_email and generate_report.
+3. Added JSON payload editing and force-failure testing.
+4. Added recent jobs, status filtering, job details, and refresh behavior.
+5. Added health, worker, queue, success-rate, and duration display areas.
+6. Added API-key entry using browser sessionStorage.
+7. Added polling for jobs and metrics.
+8. Deployed the frontend to Vercel.
+9. Configured the frontend to use the live Render API URL.
+
+Remaining:
+1. Complete authenticated production smoke testing from Vercel.
+2. Confirm all metrics render correctly with the production API response.
+3. Keep the API base URL synchronized with the Render service URL.
+4. Decide whether a DLQ view is needed; it is currently deferred from the MVP.
+5. Replace the browser-visible static API-key approach before public launch.
+
+M2 — API/BACKEND
+================
+Status: Core implementation complete; integration testing and authentication
+follow-up remain.
+
+Completed:
+1. FastAPI application with CORS, lifespan, and rate limiting.
+2. Async SQLAlchemy engine and request-scoped sessions.
+3. API-key authentication with X-API-Key.
+4. POST /jobs for send_email and generate_report.
+5. GET /jobs with filtering, pagination, and ordering.
+6. GET /jobs/{job_id} with UUID validation and not-found handling.
+7. Payload validation, payload-size limits, and configurable retries.
+8. Dead-letter queue management endpoints.
+9. Health and metrics endpoints.
+10. PostgreSQL URL normalization to the asyncpg SQLAlchemy driver.
+
+Remaining:
+1. Run the complete API integration suite with a dedicated TEST_DATABASE_URL.
+2. Confirm all production endpoints with the production API key.
+3. Finalize the API contract and response format for M1.
+4. Confirm metrics response compatibility with Queueboard.
+5. Work with M1 and M5 on browser-safe public authentication.
+
+M3 — WORKER
+===========
+Status: Worker implementation complete for the current simulated handlers.
+
+Completed:
+1. Job claiming and processing with database locking.
+2. send_email and generate_report handler registration.
+3. Capped exponential-backoff retry logic.
+4. Failure recording and maximum retry handling.
+5. Worker heartbeat updates.
+6. Worker startup and shutdown handling.
+7. Circuit-breaker tracking and reset behavior.
+8. Dead-letter queue integration and logging.
+9. Worker statistics and monitoring support.
+10. Worker and retry test files.
+
+Remaining:
+1. Confirm and apply the DLQ schema in production Supabase.
+2. Test live DLQ archival, reprocessing, and resolution behavior.
+3. Decide whether real email delivery is required for the MVP.
+4. If required, integrate an email provider and test actual delivery.
+5. Store any email-provider credentials in Render only.
+
+M4 — DATABASE/PERSISTENCE
+=========================
+Status: Main database foundation complete and live; DLQ verification and
+operational database work remain.
+
+Completed:
+1. Supabase/PostgreSQL schema design.
+2. jobs and worker_heartbeat tables.
+3. SQLAlchemy models.
+4. Constraints, indexes, and schema application script.
+5. Seed script and database QA documentation.
+6. Alembic configuration and baseline migration.
+7. Live Supabase main-schema application and validation.
+8. Database connectivity confirmed through the deployed API and worker.
+
+Remaining:
+1. Apply and verify dead_letter_queue schema, trigger, functions, views, and indexes.
+2. Provide or confirm a dedicated test database for integration tests.
+3. Confirm backups and recovery procedures.
+4. Confirm required Row Level Security and least-privilege settings.
+5. Support production database troubleshooting.
+
+M5 — DEVOPS/DEPLOYMENT
+======================
+Status: Deployment foundation and current manual deployments are working;
+production operations and security verification remain.
+
+Completed:
+1. Repository and environment foundation.
+2. GitHub Actions/CI configuration foundation.
+3. Deployment documentation and environment guidance.
+4. GitHub Secrets reported as configured by M5.
+5. Render deployment configuration.
+6. Vercel static frontend deployment configuration.
+7. Python runtime pinning for Render.
+8. Correct Uvicorn start command.
+9. Production branch synchronization and deployment support.
+10. Production Vercel and Render URLs recorded above.
+
+Remaining:
+1. Verify all GitHub Secrets without exposing their values.
+2. Complete the unchecked SECURITY.md checklist.
+3. Remove temporary CI guards such as `|| true` where appropriate.
+4. Verify the deploy and keepalive workflows are fully implemented and effective.
+5. Configure monitoring, alerts, backups, and rollback procedures.
+6. Confirm the deployed services continue to use the intended branch and commit.
+7. Support M2/M1 with the final authentication and CORS configuration.
+
+SECRETS AND ENVIRONMENT OWNERSHIP
+---------------------------------
+
+Render backend — M5 owns configuration; M4 supplies database values:
+• DATABASE_URL using the preferred postgresql+asyncpg:// format
+• SUPABASE_URL
+• SUPABASE_SERVICE_ROLE_KEY
+• API_KEY
+• WORKER_ENABLED=true
+• WORKER_CONCURRENCY=1
+• MAX_RETRIES=3
+• RATE_LIMIT_PER_MINUTE=30
+
+GitHub Actions — M5 owns configuration:
+• Production credentials required by deployment workflows
+• Test CI values should remain isolated from production values
+• Secret values must never be logged or committed
+
+Vercel frontend — M1/M5:
+• No backend secrets should be placed in Vercel for the current static frontend
+• The frontend only needs the public Render API origin in docs/index.html
+• DATABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and API_KEY must remain server-side
+
+CRITICAL PATH — NEXT STEPS IN ORDER
+------------------------------------
+
+1. M5 — Verify the production deployment
+   • Confirm Render and Vercel deploy the intended branch and commit.
+   • Confirm Render /health and /docs remain available.
+   • Verify backend environment variables and GitHub Secrets.
+   • Complete monitoring, rollback, and backup checks.
+
+2. M4 — Complete production database readiness
+   • Apply and verify the dead-letter queue schema in Supabase.
+   • Confirm backups, access control, and a dedicated test database.
+
+3. M2 — Complete API validation and frontend handoff
+   • Run the API integration suite.
+   • Confirm production endpoint behavior and metrics format.
+   • Finalize the authentication design with M1 and M5.
+
+4. M3 — Complete worker production behavior
+   • Test retries and DLQ behavior against the live schema.
+   • Decide on and, if required, implement real email delivery.
+
+5. M1 — Complete frontend production validation
+   • Test job submission, status updates, metrics, and error handling from Vercel.
+   • Integrate the approved authentication approach.
+   • Keep DLQ UI deferred unless the MVP scope changes.
+
+6. ALL MEMBERS — Final end-to-end release test
+   • Frontend submits a job.
+   • API persists the job.
+   • Worker claims and processes it.
+   • Retry and failure paths are verified.
+   • DLQ archival and reprocessing are verified.
+   • Production health, monitoring, and rollback are verified.
+
+CURRENT BLOCKERS AND RISKS
+--------------------------
+
+HIGH:
+• Public production authentication is not yet browser-safe because the current
+  flow accepts a static API key in the browser session.
+• Real email delivery is not implemented; send_email is simulated.
+
+MEDIUM:
+• DLQ schema production verification is not confirmed in this document.
+• Full API/worker integration tests require a dedicated test database.
+• CI/CD workflow enforcement and operational monitoring require verification.
+
+LOW:
+• Main API, worker, database connectivity, Vercel frontend, and Render health
+  checks are currently functioning.
 
 PROJECT READINESS ASSESSMENT
 ----------------------------
-Infrastructure: M1 foundation present; M5 setup status unverified
-Database: Supabase schema live with dead letter queue ready; Alembic baseline recorded
-API: implementation complete with dead letter queue integration; automated integration suite awaits dedicated test database
-Worker: 100% complete (M3 delivered all components)
-Security: 10% complete (Checklist created, implementation pending)
-Overall: 85% complete (Pending M5 security verification and final deployment)
+Infrastructure/DevOps: 85% — Render and Vercel working; CI/CD operations and
+monitoring/backup verification remain.
+Frontend/M1: 90% — Queueboard deployed; final smoke testing and authentication remain.
+API/M2: 85% — Core API deployed; full integration coverage and auth follow-up remain.
+Worker/M3: 80% — Processing/retry/heartbeat working; email is simulated and DLQ live verification remains.
+Database/M4: 85% — Main schema live; DLQ verification and operational controls remain.
+Security: 60% — Credentials are reported configured; SECURITY.md checklist and
+public authentication review remain.
+Overall MVP readiness: 85% — Main system path is deployed and healthy, with
+production hardening, real email decision, DLQ verification, and final testing pending.
 
-RISK ASSESSMENT
----------------
-HIGH RISK: Production deployment readiness cannot be confirmed until GitHub Secrets are verified
-MEDIUM RISK: API integration tests need a dedicated database for full validation
-LOW RISK: Worker implementation complete with comprehensive testing
-LOW RISK: Dead letter queue system implemented for failure handling
-LOW RISK: Foundation work completed successfully with good architecture
-
-CONTACT POINTS
---------------
-• M5 should confirm GitHub Secrets and complete security checklist
-• M1 available for final DevOps deployment preparation
-• M2 API ready for production with dead letter queue integration
-• M3 worker implementation complete and ready for deployment
-
-This analysis provides the current implementation status and handoff sequence.
+FINAL STATUS
+------------
+The Mini Background Job Queue has a deployed frontend, deployed API, active
+worker, and live database connectivity. The next release gate is not basic
+deployment; it is production hardening and end-to-end validation. The team must
+complete DLQ database verification, decide on real email delivery, resolve
+public authentication, finish security/operations checks, and run the complete
+frontend-to-API-to-worker test before declaring the MVP production-ready.
 
 
-M1 FRONTEND READINESS ADDENDUM — OCTOBER 22, 2026
----------------------------------------------------
-The M1 frontend implementation is present in `docs/` as the static Queueboard dashboard (`index.html`, `app.js`, `styles.css`, and `README.md`). It supports job submission, job listing/status filtering, queue metrics, API health display, API-key entry, and polling. The frontend commit is `1c42cf0` (`frontend`).
+M4 DATABASE COMPLETION UPDATE — OCTOBER 22, 2026
+--------------------------------------------------
+Repository-side M4 gaps have been completed:
+✓ Added the worker/DLQ job context columns to the schema and SQLAlchemy model:
+  metadata, error_message, error_stack, and worker_id.
+✓ Added Alembic revision 20261022_02 for the new job columns.
+✓ Corrected scripts/dead_letter_queue.sql so its trigger and functions match the
+  actual jobs schema.
+✓ Made DLQ application idempotent and transactional; the script no longer splits
+  PostgreSQL functions on semicolons.
+✓ Added verification for DLQ tables, columns, indexes, functions, views, trigger,
+  and RLS state.
+✓ Added TEST_DATABASE_URL to CI's isolated PostgreSQL service configuration.
+✓ Added docs/DATABASE_OPERATIONS.md covering DLQ verification, RLS, least
+  privilege, backup/recovery confirmation, and troubleshooting.
 
-Verification results:
-• `docs/index.html` is configured with `https://job-queue-api.onrender.com` as the API origin.
-• `app/main.py` allows `https://job-queue-docs.vercel.app` and `http://localhost:8000` in CORS.
-• `https://job-queue-docs.vercel.app` returned HTTP 404; the expected Vercel deployment is not verified.
-• `https://job-queue-api.onrender.com/health` and `/docs` timed out; the production backend is not verified as reachable.
-• Live job submission and status retrieval could not be tested because the backend did not respond and no API key was used or exposed.
+Production/external verification status:
+• A production DATABASE_URL is not present in this workspace, so the DLQ schema
+  was not executed against Supabase from this session.
+• No production credential was printed, copied, or placed in the repository.
+• M4 or M5 must run the following from a secure environment containing the real
+  production DATABASE_URL:
 
-M1 scope decision:
-• A dedicated dead-letter queue screen is not required for the initial frontend MVP. The backend DLQ management API remains available for a future/admin interface.
-• The current sessionStorage API-key approach is acceptable only for controlled MVP testing, not as secure public-browser authentication. M2 and M5 must approve a browser-safe authentication design before public launch.
+  python scripts/apply_dead_letter_schema.py
+  python scripts/apply_dead_letter_schema.py --verify
 
-Current M1 blockers:
-1. M5 or an authorized Vercel administrator must complete or verify deployment of `docs/`.
-2. M5 must confirm the actual production API URL and Render service availability.
-3. M2/M5 must approve the frontend authentication approach.
-4. After those items, run authenticated frontend smoke tests for job submission and status retrieval.
+• Supabase Dashboard confirmation is still required for automated backups,
+  retention, restore testing, and the final least-privilege role review.
+
+M4 status: Repository implementation complete; production DLQ application and
+Supabase operational confirmation remain externally owned actions.

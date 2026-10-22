@@ -24,6 +24,7 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/jobqueue_test
+      TEST_DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/jobqueue_test
       API_KEY: test-api-key
       WORKER_ENABLED: "false"
       SUPABASE_URL: http://localhost:9999

@@ -46,3 +46,25 @@ alembic upgrade head
 To add future schema changes, create a revision, inspect its generated file,
 then apply it with `alembic upgrade head`. Review generated migrations before
 applying them to Supabase.
+
+## Worker and dead-letter queue columns
+
+Revision `20261022_02_add_worker_dlq_columns.py` adds the job metadata and error
+context columns required by the worker and dead-letter queue trigger:
+
+- `metadata`
+- `error_message`
+- `error_stack`
+- `worker_id`
+
+For the existing Supabase database, apply the revision after confirming the
+Alembic baseline, or run the idempotent DLQ extension script:
+
+```bash
+python scripts/apply_dead_letter_schema.py
+python scripts/apply_dead_letter_schema.py --verify
+```
+
+The DLQ script applies the trigger, functions, views, indexes, and RLS checks in
+one PostgreSQL transaction. It must use the intended database connection and
+must not be run with local placeholder credentials against production.
