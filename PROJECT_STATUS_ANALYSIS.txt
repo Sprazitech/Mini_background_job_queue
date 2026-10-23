@@ -25,7 +25,7 @@ Security. DevOps, deployment, GitHub Secrets, and production environment setup
 belong to M5. Security verification remains part of M5's DevOps responsibility.
 
 CURRENT VERIFIED PROJECT STATUS
--------------------------------
+-----------------------------------
 
 Frontend:
 ✓ Queueboard static frontend is deployed on Vercel.
