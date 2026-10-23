@@ -81,7 +81,7 @@ The following values are configured in `.env.example` and local `.env` files:
 - Use `.env` for local development (in `.gitignore`)
 - Rotate keys if compromised
 
-## Key Generation
+##### Key Generation
 
 ### Production API Key
 ```bash
