@@ -31,6 +31,15 @@ class TestWorkerHandlers:
         with patch("app.worker.handlers._send_email_sync") as send_email:
             await handle_send_email(payload)
         send_email.assert_called_once_with(payload)
+
+    @pytest.mark.asyncio
+    async def test_handle_send_email_uses_resend_when_configured(self, monkeypatch):
+        """Use Resend instead of SMTP when its API key is configured."""
+        payload = {"to": "test@example.com", "subject": "Test", "body": "Hello"}
+        monkeypatch.setattr(settings, "RESEND_API_KEY", "re_test-key")
+        with patch("app.worker.handlers._send_email_resend", new_callable=AsyncMock) as send_email:
+            await handle_send_email(payload)
+        send_email.assert_awaited_once_with(payload)
     
     @pytest.mark.asyncio
     async def test_handle_send_email_failure(self):
