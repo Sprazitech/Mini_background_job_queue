@@ -493,3 +493,23 @@ SMTP_USE_TLS, and SMTP_USE_SSL to Render. These values must remain server-side.
 A real delivery smoke test still requires those provider credentials and a
 verified recipient address. The existing database-backed DLQ test still requires
 TEST_DATABASE_URL before live archival/reprocessing can be automated.
+
+
+RESEND HTTPS EMAIL UPDATE — OCTOBER 23, 2026
+----------------------------------------------
+M3 now supports Resend for Render Free deployments:
+✓ Added `RESEND_API_KEY` and Resend HTTPS email delivery.
+✓ Resend is preferred automatically when `RESEND_API_KEY` is configured.
+✓ SMTP remains an optional local/paid-Render fallback.
+✓ Added mocked coverage confirming the Resend path is selected.
+✓ Documented Render variables and the onboarding sender limitation.
+
+For testing without a custom domain, M5 should set in Render:
+
+  RESEND_API_KEY=re_...
+  EMAIL_FROM=onboarding@resend.dev
+
+Resend's onboarding sender is restricted to the email address associated with
+the Resend account. A custom verified domain is required for general recipients.
+A real delivery smoke test remains pending the Render environment update and
+redeployment.

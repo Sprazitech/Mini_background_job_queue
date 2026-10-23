@@ -242,3 +242,23 @@ and enter the normal retry/DLQ path instead of reporting simulated success.
 After adding the variables to Render, redeploy the service and test with a
 recipient address you control. Never place these credentials in Vercel, the
 frontend, `.env.example`, logs, or chat.
+
+
+## Resend HTTPS email testing on Render Free
+
+Render Free blocks outbound SMTP ports, so use Resend's HTTPS API instead of
+SMTP for the deployed worker. Add these variables to Render:
+
+```text
+RESEND_API_KEY=re_your_resend_api_key
+EMAIL_FROM=onboarding@resend.dev
+```
+
+The `onboarding@resend.dev` sender is for testing and is restricted by Resend to
+the email address associated with the Resend account. To send to other
+recipients, verify a custom sending domain and set `EMAIL_FROM` to a sender at
+that domain. Do not put `RESEND_API_KEY` in Vercel or the frontend.
+
+When `RESEND_API_KEY` is present, the worker uses the Resend HTTPS API. SMTP is
+used only when Resend is not configured and is not suitable for a Render Free
+service.
