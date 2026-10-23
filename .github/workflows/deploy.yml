@@ -1,57 +1,13 @@
-name: Production Deploy
+# Inactive placeholder for the future production deployment workflow.
+# MVP currently uses .github/workflows/ci.yml only.
+name: Deploy (inactive)
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "app/**"
-      - "migrations/**"
-      - "scripts/**"
-      - "requirements*.txt"
-      - ".python-version"
-      - ".github/workflows/deploy.yml"
-
-permissions:
-  contents: read
 
 jobs:
-  deploy:
-    name: Deploy production services
+  disabled:
+    if: ${{ false }}
     runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://mini-background-job-queue.onrender.com
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt -r requirements-dev.txt
-
-      - name: Run lint
-        run: ruff check app/ tests/
-
-      - name: Run tests
-        run: pytest tests/ -v --cov=app --cov-fail-under=60
-
-      - name: Require deployment hooks
-        env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
-        run: |
-          test -n "$RENDER_DEPLOY_HOOK_URL" || { echo "Missing RENDER_DEPLOY_HOOK_URL"; exit 1; }
-          test -n "$VERCEL_DEPLOY_HOOK_URL" || { echo "Missing VERCEL_DEPLOY_HOOK_URL"; exit 1; }
-
-      - name: Trigger Render deployment
-        env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-        run: curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK_URL"
-
-      - name: Trigger Vercel deployment
-        env:
-          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
-        run: curl --fail --silent --show-error -X POST "$VERCEL_DEPLOY_HOOK_URL"
+      - run: echo "Production deployment workflow is intentionally inactive for the MVP."
