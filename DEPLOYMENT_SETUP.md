@@ -262,3 +262,18 @@ that domain. Do not put `RESEND_API_KEY` in Vercel or the frontend.
 When `RESEND_API_KEY` is present, the worker uses the Resend HTTPS API. SMTP is
 used only when Resend is not configured and is not suitable for a Render Free
 service.
+
+
+## Protected production deployment workflow
+
+The production workflow requires the GitHub `production` Environment approval and
+these GitHub Actions secrets:
+
+```text
+RENDER_DEPLOY_HOOK_URL
+VERCEL_DEPLOY_HOOK_URL
+```
+
+M5 must configure required reviewers for the `production` Environment in GitHub
+Settings before production deployments can proceed. Deployment hook URLs are
+secrets and must not be logged or shared.

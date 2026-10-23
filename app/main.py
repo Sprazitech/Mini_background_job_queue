@@ -29,11 +29,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://job-queue-docs.vercel.app",
-        "https://mini-background-job-queue.vercel.app",
-        "http://localhost:8000",
-    ],
+    allow_origins=["https://mini-background-job-queue.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
